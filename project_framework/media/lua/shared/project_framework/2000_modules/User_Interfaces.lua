@@ -49,7 +49,7 @@ function UI:ShowNextStep()
 
     -- Moving to current step's to menu
     if self.currentStep == 1 then
-        local canGoForward = false
+        local canGoForward = true
         
         if self.onExitInitialMenu then
             canGoForward = self.onExitInitialMenu(self.parent)
@@ -89,7 +89,7 @@ function UI:ShowNextStep()
         local enterToMenuCallback = currentStepInfo.enterToMenuCallback
         local exitToMenuCallback = previousStepInfo.exitToMenuCallback
         local toMenuParameters = currentStepInfo.toMenuParameters
-        local canGoForward = false
+        local canGoForward = true
 
         if fromMenu.instance then
             if exitToMenuCallback then
