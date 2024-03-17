@@ -146,6 +146,8 @@ end
 
 function PFW_MainMenu:onExitFactionMenu(menu)
     self:hideStepControls(self.returnToMainMenu, self.enterInfoForward)
+
+    return true
 end
 
 function PFW_MainMenu:onEnterInfoMenu(menu)
@@ -154,6 +156,8 @@ end
 
 function PFW_MainMenu:onExitInfoMenu(menu)
     self:hideStepControls(self.selectFaction, self.customizeAppearance)
+
+    return true
 end
 
 function PFW_MainMenu:onEnterAppearanceMenu(menu)
@@ -164,10 +168,14 @@ end
 
 function PFW_MainMenu:onExitAppearanceMenu(menu)
     self:hideStepControls(self.enterInfoBack, self.finalizeCharacter)
+
+    return true
 end
 
 function PFW_MainMenu:onFinalizeCharacter(menu)
     self:hideStepControls(self.enterInfoBack, self.finalizeCharacter)
+
+    return true
 end
 
 function PFW_MainMenu:onSelectCharacter()

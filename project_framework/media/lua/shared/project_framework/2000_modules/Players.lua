@@ -29,6 +29,8 @@ PLAYER.__index = PLAYER
 
 function PLAYER:Initialize()
     if not self.player then return end
+
+    ProjectFramework.Players:Initialize(self.username, self)
 end
 
 function PLAYER:GetWhitelists()
@@ -82,6 +84,12 @@ function ProjectFramework.Players:New(username, player)
 	return object
 end
 
+function ProjectFramework.Players:Initialize(username, player)
+    self.List[username] = player
+
+    return username
+end
+
 function ProjectFramework.Players:GetPlayerByID(username)
     if not username then return false end
 
@@ -120,4 +128,38 @@ end
 
 function ProjectFramework.Players:DeleteCharacter(username, characterID)
     
+end
+
+if isClient() then
+    function ProjectFramework.Players:OnGameStart()
+        local cell = getWorld():getCell()
+        local x = cell:getMaxX()
+        local y = cell:getMaxY()
+        local z = 0
+        local playerObject = getPlayer()
+        playerObject:setInvincible(true)
+        playerObject:setInvisible(true)
+        playerObject:setGhostMode(true)
+        playerObject:setNoClip(true)
+        --[[playerObject:setX(x)
+        playerObject:setY(y)
+        playerObject:setZ(z)
+	    playerObject:setLx(x)
+	    playerObject:setLy(y)
+	    playerObject:setLz(z)--]]
+
+        local ui = PFW_Introduction:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight(), getPlayer())
+        ui:initialise()
+        ui:addToUIManager()
+
+        timer:Simple(ProjectFramework.Config.InitializationDuration, function()
+            local player = ProjectFramework.Players:New(playerObject:getUsername(), playerObject)
+            
+            if player then
+                player:Initialize()
+            else
+                -- Failed to initialize player.
+            end
+        end)
+    end
 end

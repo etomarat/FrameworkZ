@@ -3,7 +3,6 @@ require "ISUI/ISPanel"
 PFW_Notification = ISPanel:derive("PFW_Notification")
 
 function PFW_Notification:initialise()
-    local emitter = self.playerObject:getEmitter()
     self.uiHelper = ProjectFramework.UI
 
 	ISPanel.initialise(self)
@@ -12,6 +11,7 @@ function PFW_Notification:initialise()
     self.textLabel.r = 0
     self.textLabel.g = 0
     self.textLabel.b = 0
+    self.textLabel.a = 1
     self.textLabel:initialise()
     self:addChild(self.textLabel)
 
@@ -28,6 +28,9 @@ function PFW_Notification:initialise()
 end
 
 function PFW_Notification:restartFadeOut()
+    self.isExpiring = false
+    self.hasExpired = false
+    
     if timer:Exists("NotificationFadeDelay" .. self.ID) then
         timer:Remove("NotificationFadeDelay" .. self.ID)
     end
@@ -41,9 +44,12 @@ function PFW_Notification:onMouseMove(x, y)
     ISPanel.onMouseMove(self, x, y)
 
     if not self.hasEntered then
-        self:restartFadeOut()
         self.hasEntered = true
-        self.backgroundColor.a = math.min(self.originalAlpha + 0.25, 1)
+
+        if not self.hasFullyExpired then
+            self:restartFadeOut()
+            self.backgroundColor.a = math.min(self.originalAlpha + 0.25, 1)
+        end
     end
 end
 
@@ -52,7 +58,10 @@ function PFW_Notification:onMouseMoveOutside(x, y)
     
     if self.hasEntered then
         self.hasEntered = false
-        self.backgroundColor.a = self.originalAlpha
+
+        if not self.hasFullyExpired then
+            self.backgroundColor.a = self.originalAlpha
+        end
     end
 end
 

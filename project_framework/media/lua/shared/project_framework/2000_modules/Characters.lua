@@ -492,7 +492,7 @@ if isClient() then
 
     --! \brief Initializes a player's character after joining. Called by OnGameStart event hook.
     --! \return \string The username of the new character's player.
-    function ProjectFramework.Characters:OnGameStart()
+    --[[function ProjectFramework.Characters:OnGameStart()
         local cell = getWorld():getCell()
         local x = cell:getMaxX()
         local y = cell:getMaxY()
@@ -502,12 +502,12 @@ if isClient() then
         player:setInvisible(true)
         player:setGhostMode(true)
         player:setNoClip(true)
-        --[[player:setX(x)
+        player:setX(x)
         player:setY(y)
         player:setZ(z)
 	    player:setLx(x)
 	    player:setLy(y)
-	    player:setLz(z)--]]
+	    player:setLz(z)
 
         ProjectFramework.Characters:CreateCharacterTick(player, 1)
 
@@ -522,7 +522,7 @@ if isClient() then
             
             return character:Initialize()
         end)
-    end
+    end--]]
 
     --! \brief Destroys a character and removes them from the character list after disconnecting. Called by OnDisconnect event hook.
     function ProjectFramework.Characters:OnDisconnect()
