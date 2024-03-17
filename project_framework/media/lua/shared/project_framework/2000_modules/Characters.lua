@@ -440,7 +440,6 @@ if isClient() then
                 previousMouseY = y
             elseif showingTooltip == false then
                 showingTooltip = true
-                local player = getPlayer()
 
                 if player then
                     local playerIndex = player:getPlayerNum()
@@ -470,8 +469,6 @@ if isClient() then
                     end
                 end
             elseif showingTooltip == true then
-                local player = getPlayer()
-
                 if player then
                     local playerIndex = player:getPlayerNum()
                     local worldX = screenToIsoX(playerIndex, x, y, 0)
@@ -505,12 +502,12 @@ if isClient() then
         player:setInvisible(true)
         player:setGhostMode(true)
         player:setNoClip(true)
-        player:setX(x)
+        --[[player:setX(x)
         player:setY(y)
         player:setZ(z)
 	    player:setLx(x)
 	    player:setLy(y)
-	    player:setLz(z)
+	    player:setLz(z)--]]
 
         ProjectFramework.Characters:CreateCharacterTick(player, 1)
 

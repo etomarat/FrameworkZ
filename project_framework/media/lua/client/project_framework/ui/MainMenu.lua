@@ -69,11 +69,11 @@ function PFW_MainMenu:initialise()
     self.disconnectButton.font = UIFont.Large
     self:addChild(self.disconnectButton)
 
-    --[[
+    
     self.closeButton = ISButton:new(middleX, middleY + 150, 200, 50, "Close", self, PFW_MainMenu.onClose)
     self.closeButton.font = UIFont.Large
     self:addChild(self.closeButton)
-    --]]
+    
 end
 
 function PFW_MainMenu:onClose()

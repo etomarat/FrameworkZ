@@ -84,7 +84,7 @@ ProjectFramework.Modules = {}
 --! \return \table The new instance of the ProjectFramework Framework.
 function ProjectFramework.Foundation.New()
     local object = {
-        version = "0.0.0"
+        version = ProjectFramework.Config.Version
     }
 
     setmetatable(object, ProjectFramework.Foundation)
