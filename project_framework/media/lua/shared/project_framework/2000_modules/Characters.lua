@@ -58,9 +58,10 @@ function CHARACTER:Initialize()
         self:InitializeDefaultItems()
     end
 
+    self:ValidateCharacterData()
+
     if isClient() then
         timer:Simple(5, function()
-            self:ValidateCharacterData()
             sendClientCommand("PFW_CHARS", "initialize", {self.playerObj:getUsername()})
         end)
     end
@@ -211,6 +212,10 @@ function CHARACTER:SetFaction(faction)
     end
 end
 
+function CHARACTER:GetName(name)
+    return self.name
+end
+
 --! \brief Set the name of the character.
 --! \param name \string The new name for the character.
 function CHARACTER:SetName(name)
@@ -232,36 +237,41 @@ end
 --! \brief Give a character items by the specified amount.
 --! \param itemID \string The ID of the item to give.
 --! \param amount \integer The amount of the item to give.
-function CHARACTER:GiveItems(itemID, amount)
+function CHARACTER:GiveItems(uniqueID, amount)
     for i = 1, amount do
-        self:GiveItem(itemID)
+        self:GiveItem(uniqueID)
     end
 end
 
 --! \brief Give a character an item.
---! \param itemID \string The ID of the item to give.
+--! \param uniqueID \string The ID of the item to give.
 --! \return \boolean Whether or not the item was successfully given.
-function CHARACTER:GiveItem(itemID)
+function CHARACTER:GiveItem(uniqueID)
     local inventory = self:GetInventory()
-    local item = ProjectFramework.Items:GetItemByID(itemID)
+    local item = ProjectFramework.Items:GetItemByID(uniqueID)
 
     if inventory and item then
-        local worldItem = self.playerObj:getInventory():AddItem(InventoryItemFactory.CreateItem(item.id))
-        local instanceID = ProjectFramework.Items:AddInstance(item.id, worldItem)
+        local worldItem = self.playerObj:getInventory():AddItem(InventoryItemFactory.CreateItem(item.itemID))
+        local instanceID = ProjectFramework.Items:AddInstance(item.itemID)
+        local itemInstance = ProjectFramework.Items:InitializeInstance(instanceID, item, self.playerObj, worldItem)
         local itemData = {
-            id = item.id,
+            uniqueID = itemInstance.uniqueID,
+            itemID = worldItem:getFullType(),
             instanceID = instanceID,
             owner = self.playerObj:getUsername(),
-            name = item.name or "Unknown",
-            description = item.description or "No description available.",
-            category = item.category or "Uncategorized",
-            shouldConsume = item.shouldConsume or nil,
-            useAction = item.useAction or nil,
-            useTime = item.useTime or nil
+            name = itemInstance.name or "Unknown",
+            description = itemInstance.description or "No description available.",
+            category = itemInstance.category or "Uncategorized",
+            shouldConsume = itemInstance.shouldConsume or false,
+            weight = itemInstance.weight or 1,
+            useAction = itemInstance.useAction or nil,
+            useTime = itemInstance.useTime or nil
         }
 
-        worldItem:getModData()["ProjectFramework_Item"] = itemData
-        inventory:AddItem(itemData)
+        worldItem:getModData()["PFW_ITM"] = itemData
+        worldItem:setName(itemData.name)
+        worldItem:setActualWeight(itemData.weight)
+        inventory:AddItem(itemInstance)
 
         if isClient() then
             --worldItem:transmitModData() -- Only transmit when item is on ground?
@@ -282,7 +292,7 @@ function CHARACTER:TakeItem(itemID)
     if item then
         local inventory = self.playerObj:getInventory()
         local worldItem = inventory:getFirstTypeRecurse(item.id)
-        local instanceID = worldItem:getModData()["ProjectFramework_Item"].instanceID
+        local instanceID = worldItem:getModData()["PFW_ITM"].instanceID
 
         ProjectFramework.Items:RemoveInstance(item.id, instanceID)
         inventory:DoRemoveItem(worldItem)
@@ -492,12 +502,12 @@ if isClient() then
 
     --! \brief Initializes a player's character after joining. Called by OnGameStart event hook.
     --! \return \string The username of the new character's player.
-    --[[function ProjectFramework.Characters:OnGameStart()
-        local cell = getWorld():getCell()
+    function ProjectFramework.Characters:OnGameStart()
+        local player = getPlayer()
+        --[[local cell = getWorld():getCell()
         local x = cell:getMaxX()
         local y = cell:getMaxY()
         local z = 0
-        local player = getPlayer()
         player:setInvincible(true)
         player:setInvisible(true)
         player:setGhostMode(true)
@@ -513,16 +523,19 @@ if isClient() then
 
         local ui = PFW_Introduction:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight(), getPlayer())
         ui:initialise()
-        ui:addToUIManager()
+        ui:addToUIManager()--]]
 
         timer:Simple(ProjectFramework.Config.InitializationDuration, function()
             local character = ProjectFramework.Characters:New(player:getUsername())
 
             character.playerObj = player
             
-            return character:Initialize()
+            character:Initialize()
+
+            character:GiveItems("HL2RP_Suitcase", 3)
+            character:GiveItems("HL2RP_WeaponSuitcase", 3)
         end)
-    end--]]
+    end
 
     --! \brief Destroys a character and removes them from the character list after disconnecting. Called by OnDisconnect event hook.
     function ProjectFramework.Characters:OnDisconnect()

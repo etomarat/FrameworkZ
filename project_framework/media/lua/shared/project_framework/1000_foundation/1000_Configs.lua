@@ -2,7 +2,8 @@ ProjectFramework = ProjectFramework or {}
 
 -- Project HL2RP Configuration Values
 ProjectFramework.Config = {
-    Version = "0.1.1",
+    Version = "1.1.1",
+    VersionType = "pre-alpha",
 
     IntroFrameworkImage = "",
     IntroGamemodeImage = "",

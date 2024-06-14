@@ -38,7 +38,6 @@
 --! - Tutorials: Coming Soon(tm)
 --! - Example Code: Coming Soon(tm)
 
-
 --! \page globalVars Global Variables
 --! \section ProjectFramework ProjectFramework
 --! ProjectFramework
@@ -143,6 +142,24 @@ if isClient() then
 		end
 	end
 	Events.OnDisconnect.Add(ProjectFramework.Foundation.OnDisconnect)
+
+	function ProjectFramework.Foundation.OnFillInventoryObjectContextMenu(playerID, context, items)
+		for k, v in pairs(ProjectFramework.Modules) do
+			if v.OnFillInventoryObjectContextMenu then
+				v.OnFillInventoryObjectContextMenu(v, playerID, context, items)
+			end
+		end
+	end
+	Events.OnFillInventoryObjectContextMenu.Add(ProjectFramework.Foundation.OnFillInventoryObjectContextMenu)
+
+	function ProjectFramework.Foundation.OnPreFillInventoryObjectContextMenu(playerID, context, items)
+		for k, v in pairs(ProjectFramework.Modules) do
+			if v.OnPreFillInventoryObjectContextMenu then
+				v.OnPreFillInventoryObjectContextMenu(v, playerID, context, items)
+			end
+		end
+	end
+	Events.OnPreFillInventoryObjectContextMenu.Add(ProjectFramework.Foundation.OnPreFillInventoryObjectContextMenu)
 	
 end
 

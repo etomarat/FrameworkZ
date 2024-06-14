@@ -94,6 +94,6 @@ end
 
 function ProjectFramework.Inventories:GetInventoryByID(id)
     local inventory = ProjectFramework.Inventories.List[id] or nil
-    
+
     return inventory
 end
