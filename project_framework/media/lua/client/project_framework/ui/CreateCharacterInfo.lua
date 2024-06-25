@@ -197,8 +197,22 @@ function PFW_CreateCharacterInfo:initialise()
     self.hairColorDropdown:addOption("Gray")
     self.hairColorDropdown:addOption("Red")
     self.hairColorDropdown:addOption("White")
-    -- Add more hair color options as needed
     self:addChild(self.hairColorDropdown)
+
+    yOffset = yOffset + 30
+
+    self.skinColorLabel = ISLabel:new(labelX, yOffset, 25, "Skin Color:", 1, 1, 1, 1, UIFont.Large, false)
+    self.skinColorLabel:initialise()
+    self:addChild(self.skinColorLabel)
+
+    self.skinColorDropdown = ISComboBox:new(entryX, yOffset, entryWidth, 25)
+    self.skinColorDropdown:addOption("Pale")
+    self.skinColorDropdown:addOption("White")
+    self.skinColorDropdown:addOption("Beiege")
+    self.skinColorDropdown:addOption("Light Brown")
+    self.skinColorDropdown:addOption("Moderate Brown")
+    self.skinColorDropdown:addOption("Dark Brown")
+    self:addChild(self.skinColorDropdown)
 
     yOffset = yOffset + 30
 

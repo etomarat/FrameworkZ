@@ -4,6 +4,8 @@ require "ISUI/ISPanel"
 
 PFW_CreateCharacterAppearance = ISPanel:derive("PFW_CreateCharacterAppearance")
 
+local yOffset = 0
+
 function PFW_CreateCharacterAppearance:initialise()
     ISPanel.initialise(self)
 
@@ -19,7 +21,6 @@ function PFW_CreateCharacterAppearance:initialise()
     local dropdownWidth = self.width * 0.5
     local middleX = self.width / 2
     local quarterX = self.width / 4
-    local yOffset = 0
     self.factionsClothing = ProjectFramework.Factions:GetFactionByID(self.faction).clothing
     self.initialFaction = nil
     local entryWidth = 200
@@ -51,15 +52,16 @@ function PFW_CreateCharacterAppearance:initialise()
 
     if self.factionsClothing then
         self.headLabel, self.headDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Head:", "Hat", self.factionsClothing.head)
-        yOffset = yOffset + 30
+        self.faceLabel, self.faceDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Face:", "Mask", self.factionsClothing.face)
+        self.earsLabel, self.earsDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Ears:", "Ears", self.factionsClothing.ears)
+        self.backpackLabel, self.backpackDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Backpack:", "Back", self.factionsClothing.backpack)
+        self.glovesLabel, self.glovesDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Gloves:", "Hands", self.factionsClothing.gloves)
         self.undershirtLabel, self.undershirtDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Undershirt:", "Tshirt", self.factionsClothing.undershirt)
-        yOffset = yOffset + 30
         self.overshirtLabel, self.overshirtDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Overshirt:", "Shirt", self.factionsClothing.overshirt)
-        yOffset = yOffset + 30
+        self.vestLabel, self.vestDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Vest:", "TorsoExtraVest", self.factionsClothing.vest)
+        self.beltLabel, self.beltDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Belt:", "Belt", self.factionsClothing.belt)
         self.pantsLabel, self.pantsDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Pants:", "Pants", self.factionsClothing.pants)
-        yOffset = yOffset + 30
         self.socksLabel, self.socksDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Socks:", "Socks", self.factionsClothing.socks)
-        yOffset = yOffset + 30
         self.shoesLabel, self.shoesDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Shoes:", "Shoes", self.factionsClothing.shoes)
     end
 end
@@ -71,14 +73,24 @@ function PFW_CreateCharacterAppearance:addClothingOption(x, y, height, entryWidt
 
     local dropdown = ISComboBox:new(x, y, entryWidth, height,self, self.onClothingChanged)
 
-    for k, v in pairs(clothingTable) do
-        dropdown:addOptionWithData(v, {location = clothingLocation, itemID = k})
+    if clothingTable then
+        for k, v in pairs(clothingTable) do
+            dropdown:addOptionWithData(v, {location = clothingLocation, itemID = k})
+        end
     end
 
     dropdown:addOptionWithData("None", {location = clothingLocation, itemID = nil})
     dropdown:initialise()
     self:onClothingChanged(dropdown)
     self:addChild(dropdown)
+
+    if not clothingTable then
+        label:setVisible(false)
+        dropdown:setVisible(false)
+
+        return label, dropdown
+    end
+    yOffset = yOffset + 30
 
     return label, dropdown
 end

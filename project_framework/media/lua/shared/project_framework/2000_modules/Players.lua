@@ -23,14 +23,60 @@ ProjectFramework.Players.Roles = {
 ProjectFramework.Players = ProjectFramework.Foundation:NewModule(ProjectFramework.Players, "Players")
 
 --! \brief Character class for ProjectFramework.
---! \class CHARACTER
+--! \class PLAYER
 local PLAYER = {}
 PLAYER.__index = PLAYER
 
 function PLAYER:Initialize()
-    if not self.player then return end
+    if not self.isoPlayer then return end
 
-    ProjectFramework.Players:Initialize(self.username, self)
+    local firstConnection = false
+    local characterModData = self.isoPlayer:getModData()["PFW_PLY"] or nil
+
+    if not characterModData then
+        firstConnection = true
+
+        self:InitializeDefaultFactionWhitelists()
+
+        self.isoPlayer:getModData()["PFW_PLY"] = {
+            username = self.username,
+            steamID = self.steamID,
+            role = self.role,
+            maxCharacters = self.maxCharacters,
+            whitelists = self.whitelists,
+            characters = self.characters
+        }
+
+        if isClient() then
+            self.isoPlayer:transmitModData()
+        end
+    end
+
+    if isClient() then
+        timer:Simple(5, function()
+            sendClientCommand("PFW_PLY", "initialize", {self.isoPlayer:getUsername()})
+        end)
+    end
+
+    return ProjectFramework.Players:Initialize(self.username, self)
+end
+
+function PLAYER:Destroy()
+    if isClient() then
+        sendClientCommand("PFW_PLY", "destroy", {self.isoPlayer:getUsername()})
+    end
+
+    self = nil
+end
+
+function PLAYER:InitializeDefaultFactionWhitelists()
+    local factions = ProjectFramework.Factions.List
+
+    for k, v in pairs(factions) do
+        if v.isWhitelistedByDefault then
+            self.whitelists[v.id] = true
+        end
+    end
 end
 
 function PLAYER:GetWhitelists()
@@ -53,26 +99,26 @@ end
 --! \param soundName \string The name of the sound to play.
 --! \return \integer The sound's ID.
 function PLAYER:PlayLocalSound(soundName)
-    return self.player:getEmitter():playSoundImpl(soundName, nil)
+    return self.isoPlayer:getEmitter():playSoundImpl(soundName, nil)
 end
 
 --! \brief Stops a sound for the player.
 --! \param soundNameOrID \mixed of \string or \integer The name or ID of the sound to stop.
 function PLAYER:StopSound(soundNameOrID)
     if type(soundNameOrID) == "number" then
-        self.player:getEmitter():stopSound(soundNameOrID)
+        self.isoPlayer:getEmitter():stopSound(soundNameOrID)
     elseif type(soundNameOrID) == "string" then
-        self.player:getEmitter():stopSoundByName(soundNameOrID)
+        self.isoPlayer:getEmitter():stopSoundByName(soundNameOrID)
     end
 end
 
-function ProjectFramework.Players:New(username, player)
-    if not username or not player then return false end
-    
+function ProjectFramework.Players:New(username, isoPlayer)
+    if not username or not isoPlayer then return false end
+
     local object = {
         username = username,
-        player = player,
-        steamID = player:getSteamID(),
+        isoPlayer = isoPlayer,
+        steamID = isoPlayer:getSteamID(),
         role = ProjectFramework.Players.Roles.User,
         maxCharacters = ProjectFramework.Config.DefaultMaxCharacters,
         whitelists = {},
@@ -118,16 +164,38 @@ function ProjectFramework.Players:GetCharacterByID(username, characterID)
     return false
 end
 
-function ProjectFramework.Players:CreateCharacter(username, characterData)
-    
+function ProjectFramework.Players:CreateCharacter(username, data)
+    if not username or not data then return false end
+
+    local player = self:GetPlayerByID(username)
+
+    if player then
+        local characters = player.isoPlayer:getModData()["PFW_PLY"].characters
+
+        if characters then
+            table.insert(characters, data)
+
+            if isClient() then
+                player.isoPlayer:transmitModData()
+            end
+
+            return true, #characters
+        end
+    end
+
+    return false
+end
+
+function ProjectFramework.Players:SaveCharacter(username, characterID)
+
 end
 
 function ProjectFramework.Players:LoadCharacter(username, characterID)
-    
+
 end
 
 function ProjectFramework.Players:DeleteCharacter(username, characterID)
-    
+
 end
 
 if isClient() then
@@ -136,30 +204,61 @@ if isClient() then
         local x = cell:getMaxX()
         local y = cell:getMaxY()
         local z = 0
-        local playerObject = getPlayer()
-        playerObject:setInvincible(true)
-        playerObject:setInvisible(true)
-        playerObject:setGhostMode(true)
-        playerObject:setNoClip(true)
-        --[[playerObject:setX(x)
-        playerObject:setY(y)
-        playerObject:setZ(z)
-	    playerObject:setLx(x)
-	    playerObject:setLy(y)
-	    playerObject:setLz(z)--]]
+        local isoPlayer = getPlayer()
+        isoPlayer:setInvincible(true)
+        isoPlayer:setInvisible(true)
+        isoPlayer:setGhostMode(true)
+        isoPlayer:setNoClip(true)
+        isoPlayer:setX(x)
+        isoPlayer:setY(y)
+        isoPlayer:setZ(z)
+	    isoPlayer:setLx(x)
+	    isoPlayer:setLy(y)
+	    isoPlayer:setLz(z)
 
         local ui = PFW_Introduction:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight(), getPlayer())
         ui:initialise()
         ui:addToUIManager()
 
         timer:Simple(ProjectFramework.Config.InitializationDuration, function()
-            local player = ProjectFramework.Players:New(playerObject:getUsername(), playerObject)
-            
+            local player = ProjectFramework.Players:New(isoPlayer:getUsername(), isoPlayer)
+
             if player then
                 player:Initialize()
-            else
-                -- Failed to initialize player.
+                --sendClientCommand("PFW_PLY", "initialize", {player.isoPlayer:getUsername()})
             end
         end)
     end
+end
+
+if not isClient() then
+
+    function ProjectFramework.Players.OnClientCommand(module, command, isoPlayer, args)
+        if module == "PFW_PLY" then
+            if command == "initialize" then
+                local username = args[1]
+                local player = ProjectFramework.Players:New(username, isoPlayer)
+
+                if player then
+                    player:Initialize()
+                end
+            elseif command == "destroy" then
+                local username = args[1]
+                local player = ProjectFramework.Players:GetPlayerByID(username)
+
+                if player then
+                    player:Destroy()
+                end
+
+                ProjectFramework.Characters.List[username] = nil
+            elseif command == "update" then
+                local username = args[1]
+                local field = args[2]
+                local newData = args[3]
+
+                ProjectFramework.Players.List[username][field] = newData
+            end
+        end
+    end
+    Events.OnClientCommand.Add(ProjectFramework.Characters.OnClientCommand)
 end

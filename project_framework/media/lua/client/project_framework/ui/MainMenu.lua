@@ -15,7 +15,7 @@ function PFW_MainMenu:initialise()
                     mainMenu.hasFlashed2 = false
                     mainMenu.hasFlashed3 = false
                     nextLightning = ZombRandBetween(10, 60)
-    
+
                     timer:Simple(2, function()
                         mainMenu.emitter:playSoundImpl("thunder" .. ZombRandBetween(3, 4), nil)
                     end)
@@ -23,7 +23,7 @@ function PFW_MainMenu:initialise()
             end
         end
     end)
-    
+
     self.uiHelper = ProjectFramework.UI
     self.emitter = self.playerObject:getEmitter()
 	local title = ProjectFramework.Config.GamemodeTitle
@@ -37,7 +37,7 @@ function PFW_MainMenu:initialise()
 	ISPanel.initialise(self)
     self.emitter:playSoundImpl("hl2_song19", nil)
 
-    local stepWidth, stepHeight = 500, 500
+    local stepWidth, stepHeight = 500, 600
     local stepX, stepY = self.width / 2 - stepWidth / 2, self.height / 2 - stepHeight / 2
     self.MainMenu = self
     self.createCharacterSteps = ProjectFramework.UserInterfaces:New("VanillaCreateCharacter", self)
@@ -61,7 +61,7 @@ function PFW_MainMenu:initialise()
     self.createCharacterButton.font = UIFont.Large
     self:addChild(self.createCharacterButton)
 
-    self.loadCharacterButton = ISButton:new(middleX, middleY, 200, 50, loadCharacterLabel, self, PFW_MainMenu.onSelectCharacter)
+    self.loadCharacterButton = ISButton:new(middleX, middleY, 200, 50, loadCharacterLabel, self, PFW_MainMenu.onEnterLoadCharacterMenu)
     self.loadCharacterButton.font = UIFont.Large
     self:addChild(self.loadCharacterButton)
 
@@ -69,11 +69,11 @@ function PFW_MainMenu:initialise()
     self.disconnectButton.font = UIFont.Large
     self:addChild(self.disconnectButton)
 
-    
+    --[[
     self.closeButton = ISButton:new(middleX, middleY + 150, 200, 50, "Close", self, PFW_MainMenu.onClose)
     self.closeButton.font = UIFont.Large
     self:addChild(self.closeButton)
-    
+    --]]
 end
 
 function PFW_MainMenu:onClose()
@@ -175,11 +175,91 @@ end
 function PFW_MainMenu:onFinalizeCharacter(menu)
     self:hideStepControls(self.enterInfoBack, self.finalizeCharacter)
 
+    local factionInstance = PFW_CreateCharacterFaction.instance
+    local infoInstance = PFW_CreateCharacterInfo.instance
+    local appearanceInstance = PFW_CreateCharacterAppearance.instance
+
+    local faction = factionInstance.faction
+    local gender = infoInstance.genderDropdown:getSelectedText()
+    local name = infoInstance.nameEntry:getText()
+    local description = infoInstance.descriptionEntry:getText()
+    local age = infoInstance.ageSlider:getCurrentValue()
+    local height = infoInstance.heightSlider:getCurrentValue()
+    local weight = infoInstance.weightSlider:getCurrentValue()
+    local physique = infoInstance.physiqueDropdown:getSelectedText()
+    local eyeColor = infoInstance.eyeColorDropdown:getSelectedText()
+    local hairColor = infoInstance.hairColorDropdown:getSelectedText()
+    local skinColor = infoInstance.skinColorDropdown:getSelectedText()
+
+    local head = appearanceInstance.headDropdown:getOptionData(appearanceInstance.headDropdown.selected)
+    local face = appearanceInstance.faceDropdown:getOptionData(appearanceInstance.faceDropdown.selected)
+    local ears = appearanceInstance.earsDropdown:getOptionData(appearanceInstance.earsDropdown.selected)
+    local backpack = appearanceInstance.backpackDropdown:getOptionData(appearanceInstance.backpackDropdown.selected)
+    local rightHand = nil
+    local rightHandAccessory = nil
+    local leftHand = nil
+    local leftHandAccessory = nil
+    local gloves = appearanceInstance.glovesDropdown:getOptionData(appearanceInstance.glovesDropdown.selected)
+    local undershirt = appearanceInstance.undershirtDropdown:getOptionData(appearanceInstance.undershirtDropdown.selected)
+    local overshirt = appearanceInstance.overshirtDropdown:getOptionData(appearanceInstance.overshirtDropdown.selected)
+    local vest = appearanceInstance.vestDropdown:getOptionData(appearanceInstance.vestDropdown.selected)
+    local belt = appearanceInstance.beltDropdown:getOptionData(appearanceInstance.beltDropdown.selected)
+    local pants = appearanceInstance.pantsDropdown:getOptionData(appearanceInstance.pantsDropdown.selected)
+    local socks = appearanceInstance.socksDropdown:getOptionData(appearanceInstance.socksDropdown.selected)
+    local shoes = appearanceInstance.shoesDropdown:getOptionData(appearanceInstance.shoesDropdown.selected)
+
+    local characterData = {
+        faction = faction,
+        gender = gender,
+        name = name,
+        description = description,
+        age = age,
+        height = height,
+        weight = weight,
+        physique = physique,
+        eyeColor = eyeColor,
+        hairColor = hairColor,
+        skinColor = skinColor,
+        head = head,
+        face = face,
+        ears = ears,
+        backpack = backpack,
+        rightHand = rightHand,
+        rightHandAccessory = rightHandAccessory,
+        leftHand = leftHand,
+        leftHandAccessory = leftHandAccessory,
+        gloves = gloves,
+        undershirt = undershirt,
+        overshirt = overshirt,
+        vest = vest,
+        belt = belt,
+        pants = pants,
+        socks = socks,
+        shoes = shoes,
+        inventory = {}
+    }
+
+    local success, characterID = ProjectFramework.Players:CreateCharacter(self.playerObject:getUsername(), characterData)
+
+    if success then
+        ProjectFramework.Notifications:AddToQueue("Successfully created character " .. name .. " #" .. characterID .. ".")
+    else
+        ProjectFramework.Notifications:AddToQueue("Failed to create character.")
+    end
+
     return true
 end
 
-function PFW_MainMenu:onSelectCharacter()
-    self:hideMainMenuControls()
+function PFW_MainMenu:onEnterLoadCharacterMenu()
+    self:onExitMainMenu()
+
+    local loadCharacterMenuWidth = 800
+    local loadCharacterMenuHeight = 600
+
+    self.loadCharacterMenu = PFW_LoadCharacterMenu:new(self.width / 2 - loadCharacterMenuWidth / 2, self.height / 2 - loadCharacterMenuHeight / 2, loadCharacterMenuWidth, loadCharacterMenuHeight, getPlayer())
+    self.loadCharacterMenu:initialise()
+    self:addChild(self.loadCharacterMenu)
+    --self.loadCharacterMenu:addToUIManager()
 end
 
 function PFW_MainMenu:onDisconnect()

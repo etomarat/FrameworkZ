@@ -22,7 +22,7 @@ function PFW_CharacterPreview:initialise()
 	self.avatarPanel:setDirection(IsoDirections.SW)
 	self.avatarPanel:setIsometric(false)
 	self.avatarPanel:setDoRandomExtAnimations(true)
-    self.avatarPanel:reportEvent("EventWalk")
+    self.avatarPanel:reportEvent(self.defaultAnimation and self.defaultAnimation or "EventWalk")
 
 	self.turnLeftButton = ISButton:new(self.avatarPanel.x, self.avatarPanel:getBottom()-15, 15, 15, "", self, self.onTurnChar)
 	self.turnLeftButton.internal = "TURNCHARACTERLEFT"
@@ -46,7 +46,6 @@ function PFW_CharacterPreview:initialise()
 	self.animCombo:addOptionWithData(getText("IGUI_anim_Run"), "EventRun")
 	self.animCombo.selected = 1
 end
-
 
 function PFW_CharacterPreview:prerender()
     ISPanel.prerender(self)
@@ -79,12 +78,17 @@ function PFW_CharacterPreview:setSurvivorDesc(survivorDesc)
 	self.avatarPanel:setSurvivorDesc(survivorDesc)
 end
 
-function PFW_CharacterPreview:new(x, y, width, height)
+function PFW_CharacterPreview:new(x, y, width, height, defaultAnimation)
 	local o = ISPanel:new(x, y, width, height)
 
 	setmetatable(o, self)
 	self.__index = self
+
+	-- The panel is bigger than it appears when the animation selection dropdown is removed. Maybe there's a better way to handle that?
+	o.backgroundColor = {r=0, g=0, b=0, a=0}
+	o.borderColor = {r=0, g=0, b=0, a=0}
 	o.direction = IsoDirections.E
+	o.defaultAnimation = defaultAnimation
 
 	return o
 end

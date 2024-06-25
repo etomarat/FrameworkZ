@@ -39,16 +39,16 @@ function CHARACTER:Initialize()
             description = self.description or "No description available.",
             faction = self.faction or FACTION_CITIZEN,
             age = self.age or 20,
-            heightFeet = self.heightFeet or 5,
-            heightInches = self.heightInches or 10,
+            height = self.height or 70,
             eyeColor = self.eyeColor or "Brown",
             hairColor = self.hairColor or "Brown",
+            skinColor = self.skinColor or "White",
             physique = self.physique or "Average",
             weight = self.weight or "125",
             inventory = self.inventory.items or {},
             upgrades = {}
         }
-        
+
         if isClient() then
             self.playerObj:transmitModData()
         end
@@ -62,7 +62,7 @@ function CHARACTER:Initialize()
 
     if isClient() then
         timer:Simple(5, function()
-            sendClientCommand("PFW_CHARS", "initialize", {self.playerObj:getUsername()})
+            sendClientCommand("PFW_CHAR", "initialize", {self.playerObj:getUsername()})
         end)
     end
 
@@ -72,7 +72,7 @@ end
 --! \brief Destroy a character. This will remove the character from the list of characters and is usually called after a player has disconnected.
 function CHARACTER:Destroy()
     if isClient() then
-        sendClientCommand("PFW_CHARS", "destroy", {self.playerObj:getUsername()})
+        sendClientCommand("PFW_CHAR", "destroy", {self.playerObj:getUsername()})
     end
     
     self.playerObj = nil
@@ -184,7 +184,7 @@ function CHARACTER:SetAge(age)
     self.playerObj:transmitModData()
 
     if isClient() then
-        sendClientCommand("PFW_CHARS", "update", {self.playerObj:getUsername(), "age", age})
+        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "age", age})
     end
 end
 
@@ -196,7 +196,7 @@ function CHARACTER:SetDescription(description)
     self.playerObj:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHARS", "update", {self.playerObj:getUsername(), "description", description})
+        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "description", description})
     end
 end
 
@@ -208,7 +208,7 @@ function CHARACTER:SetFaction(faction)
     self.playerObj:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHARS", "update", {self.playerObj:getUsername(), "faction", faction})
+        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "faction", faction})
     end
 end
 
@@ -224,7 +224,7 @@ function CHARACTER:SetName(name)
     self.playerObj:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHARS", "update", {self.playerObj:getUsername(), "name", name})
+        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "name", name})
     end
 end
 
@@ -354,10 +354,19 @@ end
 --! \brief Create a new character object.
 --! \param username \string The player's username as their ID.
 --! \return \table The new character object.
-function ProjectFramework.Characters:New(username)
-    local object = {
-        username = username
-    }
+function ProjectFramework.Characters:New(username, data)
+    if not username then return false end
+
+    local object
+
+    if not data then
+        object = {
+            username = username
+        }
+    else
+        object = data
+        object.username = username
+    end
 
     setmetatable(object, CHARACTER)
 
@@ -503,7 +512,7 @@ if isClient() then
     --! \brief Initializes a player's character after joining. Called by OnGameStart event hook.
     --! \return \string The username of the new character's player.
     function ProjectFramework.Characters:OnGameStart()
-        local player = getPlayer()
+        --local player = getPlayer()
         --[[local cell = getWorld():getCell()
         local x = cell:getMaxX()
         local y = cell:getMaxY()
@@ -525,6 +534,7 @@ if isClient() then
         ui:initialise()
         ui:addToUIManager()--]]
 
+        --[[
         timer:Simple(ProjectFramework.Config.InitializationDuration, function()
             local character = ProjectFramework.Characters:New(player:getUsername())
 
@@ -535,6 +545,7 @@ if isClient() then
             character:GiveItems("HL2RP_Suitcase", 3)
             character:GiveItems("HL2RP_WeaponSuitcase", 3)
         end)
+        --]]
     end
 
     --! \brief Destroys a character and removes them from the character list after disconnecting. Called by OnDisconnect event hook.
@@ -562,7 +573,7 @@ if not isClient() then
     --! \param player \table Player object.
     --! \param args \string
     function ProjectFramework.Characters.OnClientCommand(module, command, player, args)
-        if module == "PFW_CHARS" then
+        if module == "PFW_CHAR" then
             if command == "initialize" then
                 local username = args[1]
                 local character = ProjectFramework.Characters:New(username)
