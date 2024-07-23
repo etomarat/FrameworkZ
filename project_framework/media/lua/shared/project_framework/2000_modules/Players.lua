@@ -43,6 +43,7 @@ function PLAYER:Initialize()
             steamID = self.steamID,
             role = self.role,
             maxCharacters = self.maxCharacters,
+            previousCharacter = self.previousCharacter,
             whitelists = self.whitelists,
             characters = self.characters
         }
@@ -51,6 +52,8 @@ function PLAYER:Initialize()
             self.isoPlayer:transmitModData()
         end
     end
+
+    self:ValidatePlayerData()
 
     if isClient() then
         timer:Simple(5, function()
@@ -77,6 +80,68 @@ function PLAYER:InitializeDefaultFactionWhitelists()
             self.whitelists[v.id] = true
         end
     end
+end
+
+function PLAYER:ValidatePlayerData()
+    local characterModData = self.isoPlayer:getModData()["PFW_PLY"]
+
+    if not characterModData then return false end
+
+    local initializedNewData = false
+
+    if not characterModData.username then
+        initializedNewData = true
+        characterModData.username = self.username or getPlayer():getUsername()
+    end
+
+    if not characterModData.steamID then
+        initializedNewData = true
+        characterModData.steamID = self.steamID or getPlayer():getSteamID()
+    end
+
+    if not characterModData.role then
+        initializedNewData = true
+        characterModData.role = self.role or ProjectFramework.Players.Roles.User
+    end
+
+    if not characterModData.maxCharacters then
+        initializedNewData = true
+        characterModData.maxCharacters = self.maxCharacters or ProjectFramework.Config.DefaultMaxCharacters
+    end
+
+    if not characterModData.previousCharacter then
+        initializedNewData = true
+        characterModData.previousCharacter = self.previousCharacter or nil
+    end
+
+    if not characterModData.whitelists then
+        self:InitializeDefaultFactionWhitelists()
+        initializedNewData = true
+        characterModData.whitelists = self.whitelists
+    end
+
+    if not characterModData.characters then
+        initializedNewData = true
+        characterModData.characters = self.characters or {}
+    end
+
+    if isClient() then
+        self.isoPlayer:transmitModData()
+    end
+
+    self.username = characterModData.username
+    self.steamID = characterModData.steamID
+    self.role = characterModData.role
+    self.maxCharacters = characterModData.maxCharacters
+    self.previousCharacter = characterModData.previousCharacter
+    self.whitelists = characterModData.whitelists
+    self.characters = characterModData.characters
+
+    return initializedNewData
+end
+
+function PLAYER:GetStoredData()
+    return self.isoPlayer:getModData()["PFW_PLY"]
 end
 
 function PLAYER:GetWhitelists()
@@ -121,6 +186,7 @@ function ProjectFramework.Players:New(username, isoPlayer)
         steamID = isoPlayer:getSteamID(),
         role = ProjectFramework.Players.Roles.User,
         maxCharacters = ProjectFramework.Config.DefaultMaxCharacters,
+        previousCharacter = nil,
         whitelists = {},
         characters = {}
     }
@@ -131,7 +197,7 @@ function ProjectFramework.Players:New(username, isoPlayer)
 end
 
 function ProjectFramework.Players:Initialize(username, player)
-    self.List[username] = player
+    ProjectFramework.Players.List[username] = player
 
     return username
 end
@@ -170,7 +236,7 @@ function ProjectFramework.Players:CreateCharacter(username, data)
     local player = self:GetPlayerByID(username)
 
     if player then
-        local characters = player.isoPlayer:getModData()["PFW_PLY"].characters
+        local characters = player:GetStoredData().characters
 
         if characters then
             table.insert(characters, data)

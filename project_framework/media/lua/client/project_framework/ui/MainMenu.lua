@@ -191,22 +191,22 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
     local hairColor = infoInstance.hairColorDropdown:getSelectedText()
     local skinColor = infoInstance.skinColorDropdown:getSelectedText()
 
-    local head = appearanceInstance.headDropdown:getOptionData(appearanceInstance.headDropdown.selected)
-    local face = appearanceInstance.faceDropdown:getOptionData(appearanceInstance.faceDropdown.selected)
-    local ears = appearanceInstance.earsDropdown:getOptionData(appearanceInstance.earsDropdown.selected)
-    local backpack = appearanceInstance.backpackDropdown:getOptionData(appearanceInstance.backpackDropdown.selected)
+    local head = appearanceInstance.headDropdown:getOptionData(appearanceInstance.headDropdown.selected).itemID
+    local face = appearanceInstance.faceDropdown:getOptionData(appearanceInstance.faceDropdown.selected).itemID
+    local ears = appearanceInstance.earsDropdown:getOptionData(appearanceInstance.earsDropdown.selected).itemID
+    local backpack = appearanceInstance.backpackDropdown:getOptionData(appearanceInstance.backpackDropdown.selected).itemID
     local rightHand = nil
     local rightHandAccessory = nil
     local leftHand = nil
     local leftHandAccessory = nil
-    local gloves = appearanceInstance.glovesDropdown:getOptionData(appearanceInstance.glovesDropdown.selected)
-    local undershirt = appearanceInstance.undershirtDropdown:getOptionData(appearanceInstance.undershirtDropdown.selected)
-    local overshirt = appearanceInstance.overshirtDropdown:getOptionData(appearanceInstance.overshirtDropdown.selected)
-    local vest = appearanceInstance.vestDropdown:getOptionData(appearanceInstance.vestDropdown.selected)
-    local belt = appearanceInstance.beltDropdown:getOptionData(appearanceInstance.beltDropdown.selected)
-    local pants = appearanceInstance.pantsDropdown:getOptionData(appearanceInstance.pantsDropdown.selected)
-    local socks = appearanceInstance.socksDropdown:getOptionData(appearanceInstance.socksDropdown.selected)
-    local shoes = appearanceInstance.shoesDropdown:getOptionData(appearanceInstance.shoesDropdown.selected)
+    local gloves = appearanceInstance.glovesDropdown:getOptionData(appearanceInstance.glovesDropdown.selected).itemID
+    local undershirt = appearanceInstance.undershirtDropdown:getOptionData(appearanceInstance.undershirtDropdown.selected).itemID
+    local overshirt = appearanceInstance.overshirtDropdown:getOptionData(appearanceInstance.overshirtDropdown.selected).itemID
+    local vest = appearanceInstance.vestDropdown:getOptionData(appearanceInstance.vestDropdown.selected).itemID
+    local belt = appearanceInstance.beltDropdown:getOptionData(appearanceInstance.beltDropdown.selected).itemID
+    local pants = appearanceInstance.pantsDropdown:getOptionData(appearanceInstance.pantsDropdown.selected).itemID
+    local socks = appearanceInstance.socksDropdown:getOptionData(appearanceInstance.socksDropdown.selected).itemID
+    local shoes = appearanceInstance.shoesDropdown:getOptionData(appearanceInstance.shoesDropdown.selected).itemID
 
     local characterData = {
         faction = faction,
@@ -220,22 +220,22 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
         eyeColor = eyeColor,
         hairColor = hairColor,
         skinColor = skinColor,
-        head = head,
-        face = face,
-        ears = ears,
-        backpack = backpack,
         rightHand = rightHand,
         rightHandAccessory = rightHandAccessory,
         leftHand = leftHand,
         leftHandAccessory = leftHandAccessory,
-        gloves = gloves,
-        undershirt = undershirt,
-        overshirt = overshirt,
-        vest = vest,
-        belt = belt,
-        pants = pants,
-        socks = socks,
-        shoes = shoes,
+        EQUIPMENT_SLOT_HEAD = head,
+        EQUIPMENT_SLOT_FACE = face,
+        EQUIPMENT_SLOT_EARS = ears,
+        EQUIPMENT_SLOT_BACKPACK = backpack,
+        EQUIPMENT_SLOT_GLOVES = gloves,
+        EQUIPMENT_SLOT_UNDERSHIRT = undershirt,
+        EQUIPMENT_SLOT_OVERSHIRT = overshirt,
+        EQUIPMENT_SLOT_VEST = vest,
+        EQUIPMENT_SLOT_BELT = belt,
+        EQUIPMENT_SLOT_PANTS = pants,
+        EQUIPMENT_SLOT_SOCKS = socks,
+        EQUIPMENT_SLOT_SHOES = shoes,
         inventory = {}
     }
 
@@ -251,15 +251,69 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
 end
 
 function PFW_MainMenu:onEnterLoadCharacterMenu()
+    local player = ProjectFramework.Players:GetPlayerByID(self.playerObject:getUsername())
+
+    if not player then
+        ProjectFramework.Notifications:AddToQueue("Failed to load characters.", nil, ProjectFramework.Notifications.Types.Danger)
+        return false
+    elseif #player.characters <= 0 then
+        ProjectFramework.Notifications:AddToQueue("No characters found.", nil, ProjectFramework.Notifications.Types.Warning)
+        return false
+    end
+
     self:onExitMainMenu()
 
-    local loadCharacterMenuWidth = 800
-    local loadCharacterMenuHeight = 600
+    if not self.loadCharacterMenu then
+        local width = 800
+        local height = 600
+        local x = self.width / 2 - width / 2
+        local y = self.height / 2 - height / 2
 
-    self.loadCharacterMenu = PFW_LoadCharacterMenu:new(self.width / 2 - loadCharacterMenuWidth / 2, self.height / 2 - loadCharacterMenuHeight / 2, loadCharacterMenuWidth, loadCharacterMenuHeight, getPlayer())
-    self.loadCharacterMenu:initialise()
-    self:addChild(self.loadCharacterMenu)
+        self.loadCharacterMenu = PFW_LoadCharacterMenu:new(x, y, width, height, player)
+        self.loadCharacterMenu:initialise()
+        self:addChild(self.loadCharacterMenu)
+    else
+        self.loadCharacterMenu:setVisible(true)
+    end
+
+    if not self.loadCharacterBackButton then
+        local widthReturn = 200
+        local heightReturn = 50
+        local xReturn = self.loadCharacterMenu:getX()
+        local yReturn = self.loadCharacterMenu:getY() + self.loadCharacterMenu.height + 25
+
+        self.loadCharacterBackButton = ISButton:new(xReturn, yReturn, widthReturn, heightReturn, "< Main Menu", self, self.onEnterMainMenuFromLoadCharacterMenu)
+        self.loadCharacterBackButton.font = UIFont.Large
+        self:addChild(self.loadCharacterBackButton)
+    else
+        self.loadCharacterBackButton:setVisible(true)
+    end
+
+    if not self.loadCharacterForwardButton then
+        local widthLoad = 200
+        local heightLoad = 50
+        local xLoad = self.loadCharacterMenu:getX() + self.loadCharacterMenu.width - widthLoad
+        local yLoad = self.loadCharacterMenu:getY() + self.loadCharacterMenu.height + 25
+
+        self.loadCharacterForwardButton = ISButton:new(xLoad, yLoad, widthLoad, heightLoad, "Load Character >", self, self.onLoadCharacter)
+        self.loadCharacterForwardButton.font = UIFont.Large
+        self:addChild(self.loadCharacterForwardButton)
+    else
+        self.loadCharacterForwardButton:setVisible(true)
+    end
     --self.loadCharacterMenu:addToUIManager()
+end
+
+function PFW_MainMenu:onEnterMainMenuFromLoadCharacterMenu()
+    self.loadCharacterBackButton:setVisible(false)
+    self.loadCharacterForwardButton:setVisible(false)
+    self.loadCharacterMenu:setVisible(false)
+
+    self:onEnterMainMenu()
+end
+
+function PFW_MainMenu:onLoadCharacter()
+    
 end
 
 function PFW_MainMenu:onDisconnect()

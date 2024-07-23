@@ -7,11 +7,38 @@
 
 ProjectFramework = ProjectFramework or {}
 
+EQUIPMENT_SLOT_HEAD = "Hat"
+EQUIPMENT_SLOT_FACE = "Mask"
+EQUIPMENT_SLOT_EARS = "Ears"
+EQUIPMENT_SLOT_BACKPACK = "Back"
+EQUIPMENT_SLOT_GLOVES = "Hands"
+EQUIPMENT_SLOT_UNDERSHIRT = "Tshirt"
+EQUIPMENT_SLOT_OVERSHIRT = "Shirt"
+EQUIPMENT_SLOT_VEST = "TorsoExtraVest"
+EQUIPMENT_SLOT_BELT = "Belt"
+EQUIPMENT_SLOT_PANTS = "Pants"
+EQUIPMENT_SLOT_SOCKS = "Socks"
+EQUIPMENT_SLOT_SHOES = "Shoes"
+
 --! \brief Characters module for ProjectFramework. Defines and interacts with CHARACTER object.
 --! \class Characters
 ProjectFramework.Characters = {}
 ProjectFramework.Characters.__index = ProjectFramework.Characters
 ProjectFramework.Characters.List = {}
+ProjectFramework.Characters.EquipmentSlots = {
+    EQUIPMENT_SLOT_HEAD,
+    EQUIPMENT_SLOT_FACE,
+    EQUIPMENT_SLOT_EARS,
+    EQUIPMENT_SLOT_BACKPACK,
+    EQUIPMENT_SLOT_GLOVES,
+    EQUIPMENT_SLOT_UNDERSHIRT,
+    EQUIPMENT_SLOT_OVERSHIRT,
+    EQUIPMENT_SLOT_VEST,
+    EQUIPMENT_SLOT_BELT,
+    EQUIPMENT_SLOT_PANTS,
+    EQUIPMENT_SLOT_SOCKS,
+    EQUIPMENT_SLOT_SHOES
+}
 ProjectFramework.Characters = ProjectFramework.Foundation:NewModule(ProjectFramework.Characters, "Characters")
 
 --! \brief Character class for ProjectFramework.
@@ -393,7 +420,6 @@ function ProjectFramework.Characters:GetCharacterByID(username)
 end
 
 if isClient() then
-
 
     local showingTooltip = false
     local previousMouseX = 0
