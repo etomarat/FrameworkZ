@@ -163,6 +163,14 @@ end
 function PFW_MainMenu:onEnterAppearanceMenu(menu)
     menu.faction = PFW_CreateCharacterFaction.instance.faction
     menu.gender = PFW_CreateCharacterInfo.instance.gender
+    menu.skinColor = PFW_CreateCharacterInfo.instance.skinColorDropdown:getOptionData(PFW_CreateCharacterInfo.instance.skinColorDropdown.selected)
+
+    PFW_CreateCharacterAppearance.instance.skinColor = menu.skinColor
+
+    PFW_CreateCharacterAppearance.instance:resetGender(menu.gender)
+    PFW_CreateCharacterAppearance.instance:resetHairStyles()
+    PFW_CreateCharacterAppearance.instance:syncSkinColor()
+
     self:showStepControls(menu, "enterInfoBack", self.enterInfoBack, "< Info", "finalizeCharacter", self.finalizeCharacter, "Finalize >")
 end
 
@@ -189,41 +197,39 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
     local physique = infoInstance.physiqueDropdown:getSelectedText()
     local eyeColor = infoInstance.eyeColorDropdown:getSelectedText()
     local hairColor = infoInstance.hairColorDropdown:getSelectedText()
-    local skinColor = infoInstance.skinColorDropdown:getSelectedText()
+    local skinColor = infoInstance.skinColorDropdown:getOptionData(infoInstance.skinColorDropdown.selected) or nil
 
-    local head = appearanceInstance.headDropdown:getOptionData(appearanceInstance.headDropdown.selected).itemID
-    local face = appearanceInstance.faceDropdown:getOptionData(appearanceInstance.faceDropdown.selected).itemID
-    local ears = appearanceInstance.earsDropdown:getOptionData(appearanceInstance.earsDropdown.selected).itemID
-    local backpack = appearanceInstance.backpackDropdown:getOptionData(appearanceInstance.backpackDropdown.selected).itemID
+    local hair = appearanceInstance.hairDropdown and appearanceInstance.hairDropdown:getOptionData(appearanceInstance.hairDropdown.selected) or nil
+    local head = appearanceInstance.headDropdown and appearanceInstance.headDropdown:getOptionData(appearanceInstance.headDropdown.selected).itemID or nil
+    local face = appearanceInstance.faceDropdown and appearanceInstance.faceDropdown:getOptionData(appearanceInstance.faceDropdown.selected).itemID or nil
+    local ears = appearanceInstance.earsDropdown and appearanceInstance.earsDropdown:getOptionData(appearanceInstance.earsDropdown.selected).itemID or nil
+    local backpack = appearanceInstance.backpackDropdown and appearanceInstance.backpackDropdown:getOptionData(appearanceInstance.backpackDropdown.selected).itemID or nil
     local rightHand = nil
     local rightHandAccessory = nil
     local leftHand = nil
     local leftHandAccessory = nil
-    local gloves = appearanceInstance.glovesDropdown:getOptionData(appearanceInstance.glovesDropdown.selected).itemID
-    local undershirt = appearanceInstance.undershirtDropdown:getOptionData(appearanceInstance.undershirtDropdown.selected).itemID
-    local overshirt = appearanceInstance.overshirtDropdown:getOptionData(appearanceInstance.overshirtDropdown.selected).itemID
-    local vest = appearanceInstance.vestDropdown:getOptionData(appearanceInstance.vestDropdown.selected).itemID
-    local belt = appearanceInstance.beltDropdown:getOptionData(appearanceInstance.beltDropdown.selected).itemID
-    local pants = appearanceInstance.pantsDropdown:getOptionData(appearanceInstance.pantsDropdown.selected).itemID
-    local socks = appearanceInstance.socksDropdown:getOptionData(appearanceInstance.socksDropdown.selected).itemID
-    local shoes = appearanceInstance.shoesDropdown:getOptionData(appearanceInstance.shoesDropdown.selected).itemID
+    local gloves = appearanceInstance.glovesDropdown and appearanceInstance.glovesDropdown:getOptionData(appearanceInstance.glovesDropdown.selected).itemID or nil
+    local undershirt = appearanceInstance.undershirtDropdown and appearanceInstance.undershirtDropdown:getOptionData(appearanceInstance.undershirtDropdown.selected).itemID or nil
+    local overshirt = appearanceInstance.overshirtDropdown and appearanceInstance.overshirtDropdown:getOptionData(appearanceInstance.overshirtDropdown.selected).itemID or nil
+    local vest = appearanceInstance.vestDropdown and appearanceInstance.vestDropdown:getOptionData(appearanceInstance.vestDropdown.selected).itemID or nil
+    local belt = appearanceInstance.beltDropdown and appearanceInstance.beltDropdown:getOptionData(appearanceInstance.beltDropdown.selected).itemID or nil
+    local pants = appearanceInstance.pantsDropdown and appearanceInstance.pantsDropdown:getOptionData(appearanceInstance.pantsDropdown.selected).itemID or nil
+    local socks = appearanceInstance.socksDropdown and appearanceInstance.socksDropdown:getOptionData(appearanceInstance.socksDropdown.selected).itemID or nil
+    local shoes = appearanceInstance.shoesDropdown and appearanceInstance.shoesDropdown:getOptionData(appearanceInstance.shoesDropdown.selected).itemID or nil
 
     local characterData = {
-        faction = faction,
-        gender = gender,
-        name = name,
-        description = description,
-        age = age,
-        height = height,
-        weight = weight,
-        physique = physique,
-        eyeColor = eyeColor,
-        hairColor = hairColor,
-        skinColor = skinColor,
-        rightHand = rightHand,
-        rightHandAccessory = rightHandAccessory,
-        leftHand = leftHand,
-        leftHandAccessory = leftHandAccessory,
+        INFO_FACTION = faction,
+        INFO_GENDER = gender,
+        INFO_NAME = name,
+        INFO_DESCRIPTION = description,
+        INFO_AGE = age,
+        INFO_HEIGHT = height,
+        INFO_WEIGHT = weight,
+        INFO_PHYSIQUE = physique,
+        INFO_EYE_COLOR = eyeColor,
+        INFO_HAIR_COLOR = hairColor,
+        INFO_SKIN_COLOR = skinColor,
+        INFO_HAIR_STYLE = hair,
         EQUIPMENT_SLOT_HEAD = head,
         EQUIPMENT_SLOT_FACE = face,
         EQUIPMENT_SLOT_EARS = ears,
@@ -236,6 +242,10 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
         EQUIPMENT_SLOT_PANTS = pants,
         EQUIPMENT_SLOT_SOCKS = socks,
         EQUIPMENT_SLOT_SHOES = shoes,
+        rightHand = rightHand,
+        rightHandAccessory = rightHandAccessory,
+        leftHand = leftHand,
+        leftHandAccessory = leftHandAccessory,
         inventory = {}
     }
 

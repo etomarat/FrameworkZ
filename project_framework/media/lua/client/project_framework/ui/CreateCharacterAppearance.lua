@@ -12,6 +12,7 @@ function PFW_CreateCharacterAppearance:initialise()
     local isFemale = (self.gender == "Female" and true) or (self.gender == "Male" and false)
     self.survivor = SurvivorFactory:CreateSurvivor(SurvivorType.Neutral, isFemale)
     self.survivor:setFemale(isFemale)
+    self.survivor:getHumanVisual():setSkinTextureIndex(self.skinColor)
     self.uiHelper = ProjectFramework.UI
 
     local title = "Appearance"
@@ -50,6 +51,36 @@ function PFW_CreateCharacterAppearance:initialise()
     self.characterPreview:setSurvivorDesc(self.survivor)
     self:addChild(self.characterPreview)
 
+    self.hairLabel = ISLabel:new(entryX - 5, yOffset, 25, "Hair:", 1, 1, 1, 1, UIFont.Large, false)
+    self.hairLabel:initialise()
+    self:addChild(self.hairLabel)
+
+    local hairStyles = getAllHairStyles(isFemale)
+
+    self.hairDropdown = ISComboBox:new(entryX, yOffset, entryWidth, 25, self, self.onHairChanged)
+
+    for i = 1, hairStyles:size() do
+        local styleId = hairStyles:get(i - 1)
+        local hairStyle = isFemale and getHairStylesInstance():FindFemaleStyle(styleId) or getHairStylesInstance():FindMaleStyle(styleId)
+        local label = styleId
+
+        if label == "" then
+            label = getText("IGUI_Hair_Bald")
+        else
+            label = getText("IGUI_Hair_" .. label)
+        end
+
+        if not hairStyle:isNoChoose() then
+            self.hairDropdown:addOptionWithData(label, hairStyles:get(i - 1))
+        end
+    end
+
+    self.hairDropdown:initialise()
+    self:onHairChanged(self.hairDropdown)
+    self:addChild(self.hairDropdown)
+
+    yOffset = yOffset + 30
+
     if self.factionsClothing then
         self.headLabel, self.headDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Head:", "Hat", self.factionsClothing.head)
         self.faceLabel, self.faceDropdown = self:addClothingOption(entryX, yOffset, 25, entryWidth, "Face:", "Mask", self.factionsClothing.face)
@@ -67,6 +98,8 @@ function PFW_CreateCharacterAppearance:initialise()
 end
 
 function PFW_CreateCharacterAppearance:addClothingOption(x, y, height, entryWidth, labelText, clothingLocation, clothingTable)
+    if not clothingTable then return nil, nil end
+
     local label = ISLabel:new(x - 5, y, height, labelText, 1, 1, 1, 1, UIFont.Large, false)
     label:initialise()
     self:addChild(label)
@@ -95,7 +128,17 @@ function PFW_CreateCharacterAppearance:addClothingOption(x, y, height, entryWidt
     return label, dropdown
 end
 
+function PFW_CreateCharacterAppearance:onHairChanged(dropdown)
+	local hair = dropdown:getOptionData(dropdown.selected)
+
+	self.hairType = dropdown.selected - 1
+	self.survivor:getHumanVisual():setHairModel(hair)
+    self.characterPreview:setSurvivorDesc(self.survivor)
+end
+
 function PFW_CreateCharacterAppearance:onClothingChanged(dropdown)
+    if not dropdown then return end
+
     local dropdownData = dropdown:getOptionData(dropdown.selected)
     local itemID = dropdownData.itemID
     local location = dropdownData.location
@@ -110,17 +153,56 @@ function PFW_CreateCharacterAppearance:onClothingChanged(dropdown)
     self.characterPreview:setSurvivorDesc(self.survivor)
 end
 
-function PFW_CreateCharacterAppearance:resetGender()
-    local isFemale = (self.gender == "Female" and true) or (self.gender == "Male" and false)
-    self.survivor = SurvivorFactory:CreateSurvivor(SurvivorType.Neutral, isFemale)
-    self.survivor:setFemale(isFemale)
-    self:onClothingChanged(self.headDropdown)
-    self:onClothingChanged(self.undershirtDropdown)
-    self:onClothingChanged(self.overshirtDropdown)
-    self:onClothingChanged(self.pantsDropdown)
-    self:onClothingChanged(self.socksDropdown)
-    self:onClothingChanged(self.shoesDropdown)
-    self.characterPreview:setSurvivorDesc(self.survivor)
+function PFW_CreateCharacterAppearance:resetGender(newGender)
+    if self.survivor and self.gender ~= newGender then
+        self.gender = newGender
+
+        local isFemale = (self.gender == "Female" and true) or (self.gender == "Male" and false)
+        self.survivor = SurvivorFactory:CreateSurvivor(SurvivorType.Neutral, isFemale)
+        self.survivor:setFemale(isFemale)
+        self:onClothingChanged(self.headDropdown)
+        self:onClothingChanged(self.undershirtDropdown)
+        self:onClothingChanged(self.overshirtDropdown)
+        self:onClothingChanged(self.pantsDropdown)
+        self:onClothingChanged(self.socksDropdown)
+        self:onClothingChanged(self.shoesDropdown)
+        self.characterPreview:setSurvivorDesc(self.survivor)
+
+        self:onHairChanged(self.hairDropdown)
+    end
+end
+
+function PFW_CreateCharacterAppearance:resetHairStyles()
+    if self.survivor then
+        local hairStyles = getAllHairStyles(self.survivor:isFemale())
+
+        self.hairDropdown:clear()
+
+        for i = 1, hairStyles:size() do
+            local styleId = hairStyles:get(i - 1)
+            local hairStyle = self.survivor:isFemale() and getHairStylesInstance():FindFemaleStyle(styleId) or getHairStylesInstance():FindMaleStyle(styleId)
+            local label = styleId
+
+            if label == "" then
+                label = getText("IGUI_Hair_Bald")
+            else
+                label = getText("IGUI_Hair_" .. label)
+            end
+
+            if not hairStyle:isNoChoose() then
+                self.hairDropdown:addOptionWithData(label, hairStyles:get(i - 1))
+            end
+        end
+
+        self:onHairChanged(self.hairDropdown)
+    end
+end
+
+function PFW_CreateCharacterAppearance:syncSkinColor()
+    if self.survivor then
+        self.survivor:getHumanVisual():setSkinTextureIndex(self.skinColor)
+        self.characterPreview:setSurvivorDesc(self.survivor)
+    end
 end
 
 function PFW_CreateCharacterAppearance:render()
@@ -143,6 +225,7 @@ function PFW_CreateCharacterAppearance:new(parameters)
 	o.playerObject = parameters.playerObject
     o.faction = parameters.faction
     o.gender = parameters.gender
+    o.skinColor = parameters.skinColor
 	PFW_CreateCharacterAppearance.instance = o
 
 	return o

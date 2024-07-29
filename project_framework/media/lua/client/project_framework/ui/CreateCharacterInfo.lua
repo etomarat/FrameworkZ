@@ -206,12 +206,11 @@ function PFW_CreateCharacterInfo:initialise()
     self:addChild(self.skinColorLabel)
 
     self.skinColorDropdown = ISComboBox:new(entryX, yOffset, entryWidth, 25)
-    self.skinColorDropdown:addOption("Pale")
-    self.skinColorDropdown:addOption("White")
-    self.skinColorDropdown:addOption("Beige")
-    self.skinColorDropdown:addOption("Light Brown")
-    self.skinColorDropdown:addOption("Moderate Brown")
-    self.skinColorDropdown:addOption("Dark Brown")
+    self.skinColorDropdown:addOptionWithData("Pale", SKIN_COLOR_PALE)
+    self.skinColorDropdown:addOptionWithData("White", SKIN_COLOR_WHITE)
+    self.skinColorDropdown:addOptionWithData("Tanned", SKIN_COLOR_TANNED)
+    self.skinColorDropdown:addOptionWithData("Brown", SKIN_COLOR_BROWN)
+    self.skinColorDropdown:addOptionWithData("Dark Brown", SKIN_COLOR_DARK_BROWN)
     self:addChild(self.skinColorDropdown)
 
     yOffset = yOffset + 30

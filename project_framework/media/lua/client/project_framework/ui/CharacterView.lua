@@ -107,6 +107,8 @@ function PFW_CharacterView:updateAppearance()
     local socksItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_SOCKS)
     local shoesItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_SHOES)
 
+    self.survivor:getHumanVisual():setHairModel(character.INFO_HAIR_STYLE)
+
     self.survivor:setWornItem(EQUIPMENT_SLOT_HEAD, headItem)
     self.survivor:setWornItem(EQUIPMENT_SLOT_FACE, faceItem)
     self.survivor:setWornItem(EQUIPMENT_SLOT_EARS, earsItem)
@@ -137,8 +139,8 @@ end
 
 function PFW_CharacterView:reinitialize(character)
     self:setCharacter(character)
-    self:setName(character.name)
-    self:setDescription(character.description)
+    self:setName(character.INFO_NAME)
+    self:setDescription(character.INFO_DESCRIPTION)
     self:initialise()
 end
 
