@@ -3,7 +3,7 @@ FrameworkZ = FrameworkZ or {}
 -- FrameworkZ Configuration Values
 FrameworkZ.Config = {
     SkipIntro = false,
-    Version = "2.3.2",
+    Version = "2.4.2",
     VersionType = "alpha",
 
     IntroFrameworkImage = "media/textures/fz.png",
@@ -23,6 +23,17 @@ FrameworkZ.Config = {
     CharacterMaxHeight = 84, -- Inches
     CharacterMinWeight = 80, -- Pounds
     CharacterMaxWeight = 300, -- Pounds
+
+    CharacterSaveInterval = 600,
+    ShouldNotifyOnCharacterSave = true,
+
+    LimboX = 18539,
+    LimboY = 79,
+    LimboZ = 0,
+
+    SpawnX = 0,
+    SpawnY = 0,
+    SpawnZ = 0,
 
     DefaultMaxCharacters = 1,
 

@@ -521,15 +521,15 @@ end
 --]]
 
 if isClient() then
-	--! \brief Called when the game starts. Executes the OnGameStart function for all modules.
+    --! \brief Called when the game starts. Executes the OnGameStart function for all modules.
 	function FrameworkZ.Foundation:OnGameStart()
-		FrameworkZ.Foundation.ExecuteFrameworkHooks("InitializeClient")
+		FrameworkZ.Foundation.ExecuteFrameworkHooks("InitializeClient", getPlayer())
 	end
 
-    function FrameworkZ.Foundation:InitializeClient()
-		FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient")
-		FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient")
-		FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient")
+    function FrameworkZ.Foundation:InitializeClient(isoPlayer)
+        FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient", isoPlayer)
+		FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient", isoPlayer)
+		FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient", isoPlayer)
 	end
     FrameworkZ.Foundation:AddHookHandler("InitializeClient", HOOK_CATEGORY_FRAMEWORK)
     FrameworkZ.Foundation:AddHookHandler("InitializeClient", HOOK_CATEGORY_MODULE)

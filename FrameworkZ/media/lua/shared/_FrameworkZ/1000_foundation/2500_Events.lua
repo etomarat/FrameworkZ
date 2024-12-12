@@ -2,6 +2,11 @@ local Events = Events
 
 FrameworkZ = FrameworkZ or {}
 
+function FrameworkZ.OnConnected()
+    FrameworkZ.Foundation.ExecuteAllHooks("OnConnected")
+end
+Events.OnConnected.Add(FrameworkZ.OnConnected)
+
 function FrameworkZ.OnPlayerDeath(player)
     FrameworkZ.Foundation.ExecuteAllHooks("OnPlayerDeath")
 end
@@ -51,7 +56,7 @@ Events.OnFillInventoryObjectContextMenu.Add(FrameworkZ.OnFillInventoryObjectCont
 FrameworkZ.Foundation:AddAllHookHandlers("OnFillInventoryObjectContextMenu")
 
 function FrameworkZ.OnPreFillInventoryObjectContextMenu(playerID, context, items)
-    FrameworkZ.ExecuteAllHooks("OnPreFillInventoryObjectContextMenu")
+    FrameworkZ.Foundation.ExecuteAllHooks("OnPreFillInventoryObjectContextMenu")
 
     --[[for k, v in pairs(FrameworkZ.Modules) do
         if v.OnPreFillInventoryObjectContextMenu then

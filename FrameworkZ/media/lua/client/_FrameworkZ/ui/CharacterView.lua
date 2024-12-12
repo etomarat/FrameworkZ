@@ -25,7 +25,7 @@ function PFW_CharacterView:initialise()
     self.uiHelper = FrameworkZ.UI
     local descriptionLines = self:getDescriptionLines(self.description)
     local descriptionHeight = FONT_HEIGHT_SMALL * 4
-    local isFemale = (self.character.gender == "Female" and true) or (self.character.gender == "Male" and false)
+    local isFemale = (self.character.INFO_GENDER == "Female" and true) or (self.character.INFO_GENDER == "Male" and false)
     local x = self.uiHelper.GetMiddle(self.width, UIFont.Medium, self.name)
     local y = 0
 
@@ -39,7 +39,7 @@ function PFW_CharacterView:initialise()
     local previewHeight = self.height - self.characterNameLabel.height - descriptionHeight
     y = y + self.characterNameLabel.height + 4
 
-    self.characterPreview = PFW_CharacterPreview:new(0, y, self.width, previewHeight, "EventIdle")
+    self.characterPreview = PFW_CharacterPreview:new(0, y, self.width, previewHeight, "EventIdle", self.defaultDirection)
     self.characterPreview:initialise()
     self.characterPreview:removeChild(self.characterPreview.animCombo)
     self.characterPreview:setCharacter(self.isoPlayer)
@@ -189,7 +189,7 @@ function PFW_CharacterView:getDescriptionLines(description)
     return lines
 end
 
-function PFW_CharacterView:new(x, y, width, height, isoPlayer, character, name, description)
+function PFW_CharacterView:new(x, y, width, height, isoPlayer, character, name, description, defaultDirection)
     local o = {}
 
 	o = ISPanel:new(x, y, width, height)
@@ -202,6 +202,7 @@ function PFW_CharacterView:new(x, y, width, height, isoPlayer, character, name, 
     self.character = character
     o.name = name
     o.description = description
+    o.defaultDirection = defaultDirection
 	PFW_CharacterView.instance = o
 
 	return o

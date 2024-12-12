@@ -9,12 +9,14 @@ FrameworkZ.Notifications.List = {}
 FrameworkZ.Notifications.Types = {
     Default = "Default",
     Info = "Info",
+    Success = "Success",
     Warning = "Warning",
     Danger = "Danger"
 }
 FrameworkZ.Notifications.Colors = {
     Default = {r = 1, g = 1, b = 1, a = 1},
     Info = {r = 0.051, g = 0.792, b = 0.941, a = 1},
+    Success = {r = 0.098, g = 0.529, b = 0.329, a = 1},
     Warning = {r = 1, g = 0.757, b = 0.027, a = 1},
     Danger = {r = 0.863, g = 0.208, b = 0.271, a = 1}
 }
@@ -122,14 +124,14 @@ end
 
 --! \brief Adds a notification to the queue.
 --! \param message \string The message to display.
+--! \param notificationType \string The type of notification to display. See notification types.
 --! \param duration \integer The duration the notification should be displayed for.
---! \param type \string The type of notification to display. See notification types.
 --! \param ui \object The UI object that would cover where notifications display. Useful if you want to display notifications over top of a specific UI object.
 --! \return \class The notification UI object.
-function FrameworkZ.Notifications:AddToQueue(message, duration, type, ui)
+function FrameworkZ.Notifications:AddToQueue(message, notificationType, duration, ui)
     if not message then return end
 
-    local notification = PFW_Notification:new(type and type or FrameworkZ.Notifications.Types.Default, message, duration and duration or 10, getPlayer())
+    local notification = PFW_Notification:new(notificationType or FrameworkZ.Notifications.Types.Default, message, duration or 10, getPlayer())
 
     if ui then
         notification.parentUI = ui

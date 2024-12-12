@@ -19,7 +19,7 @@ function PFW_CharacterPreview:initialise()
 	self.avatarPanel.borderColor = {r=1, g=1, b=1, a=0.2}
 	self:addChild(self.avatarPanel)
 	self.avatarPanel:setState("idle")
-	self.avatarPanel:setDirection(IsoDirections.SW)
+	self.avatarPanel:setDirection(self.direction)
 	self.avatarPanel:setIsometric(false)
 	self.avatarPanel:setDoRandomExtAnimations(true)
     self.avatarPanel:reportEvent(self.defaultAnimation and self.defaultAnimation or "EventWalk")
@@ -78,7 +78,7 @@ function PFW_CharacterPreview:setSurvivorDesc(survivorDesc)
 	self.avatarPanel:setSurvivorDesc(survivorDesc)
 end
 
-function PFW_CharacterPreview:new(x, y, width, height, defaultAnimation)
+function PFW_CharacterPreview:new(x, y, width, height, defaultAnimation, defaultDirection)
 	local o = ISPanel:new(x, y, width, height)
 
 	setmetatable(o, self)
@@ -87,7 +87,7 @@ function PFW_CharacterPreview:new(x, y, width, height, defaultAnimation)
 	-- The panel is bigger than it appears when the animation selection dropdown is removed. Maybe there's a better way to handle that?
 	o.backgroundColor = {r=0, g=0, b=0, a=0}
 	o.borderColor = {r=0, g=0, b=0, a=0}
-	o.direction = IsoDirections.E
+	o.direction = defaultDirection and defaultDirection or IsoDirections.SW
 	o.defaultAnimation = defaultAnimation
 
 	return o

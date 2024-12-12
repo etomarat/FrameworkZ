@@ -21,9 +21,9 @@ function PFW_CreateCharacterInfo:initialise()
     local yOffset = 0
 
     self.nameLimit = 32
-    self.recommendedNameLength = 16
+    self.recommendedNameLength = 8
     self.descriptionLimit = 256
-    self.recommendedDescriptionLength = 32
+    self.recommendedDescriptionLength = 24
 
     -- 9 fields (1 double height) = 9 * 30 + 75 = 345
 

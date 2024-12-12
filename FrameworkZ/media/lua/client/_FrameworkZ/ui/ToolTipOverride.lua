@@ -71,7 +71,30 @@ function FrameworkZ.Overrides.DoTooltip(objTooltip, item, panel)
 
         yOffset = yOffset + 2.5
     else
+        objTooltip:DrawText(font, item:getDisplayName(), 5.0, yOffset, 1.0, 1.0, 0.8, 1.0)
+        objTooltip:adjustWidth(5, item:getDisplayName())
+        yOffset = yOffset + lineSpace + 5
 
+        local yTextureOffset = textureHeight + 10
+        objTooltip:DrawTextureScaled(item:getTexture(), panel:getWidth() - textureWidth - 15, 5, textureWidth, textureHeight, 0.75)
+
+        --[[
+        local description = FrameworkZ.Overrides.WordWrapText(item:getDescription())
+
+        for k, v in pairs(description) do
+            objTooltip:DrawText(font, v, 5, yOffset, 1, 1, 0.8, 1)
+            objTooltip:adjustWidth(5, v)
+            yOffset = yOffset + lineSpace + 2.5
+        end
+        --]]
+
+        if yTextureOffset > yOffset then
+            yOffset = yTextureOffset
+        end
+
+        panel:drawRect(0, yOffset, panel:getWidth(), 1, panel.borderColor.a, panel.borderColor.r, panel.borderColor.g, panel.borderColor.b)
+
+        yOffset = yOffset + 2.5
     end
 
     local layoutTooltip = objTooltip:beginLayout()

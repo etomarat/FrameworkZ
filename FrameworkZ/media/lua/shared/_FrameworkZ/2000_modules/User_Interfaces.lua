@@ -50,7 +50,7 @@ function UI:ShowNextStep()
     -- Moving to current step's to menu
     if self.currentStep == 1 then
         local canGoForward = true
-        
+
         if self.onExitInitialMenu then
             canGoForward = self.onExitInitialMenu(self.parent)
         end
@@ -78,6 +78,8 @@ function UI:ShowNextStep()
                 self.parent[toMenuName]:initialise()
                 self.parent:addChild(self.parent[toMenuName])
             end
+
+            self.currentStep = self.currentStep + 1
         end
 
     -- Move to next step's to menu
@@ -93,7 +95,7 @@ function UI:ShowNextStep()
 
         if fromMenu.instance then
             if exitToMenuCallback then
-                canGoForward = exitToMenuCallback(self.parent, fromMenu.instance)
+                canGoForward = exitToMenuCallback(self.parent, fromMenu.instance, true)
             end
 
             if canGoForward then
@@ -119,10 +121,10 @@ function UI:ShowNextStep()
                 self.parent[toMenuName]:initialise()
                 self.parent:addChild(self.parent[toMenuName])
             end
+
+            self.currentStep = self.currentStep + 1
         end
     end
-
-    self.currentStep = self.currentStep + 1
 
     return true
 end
@@ -140,7 +142,7 @@ function UI:ShowPreviousStep()
 
         if toMenu.instance then
             if exitToMenuCallback then
-                exitToMenuCallback(self.parent, toMenu)
+                exitToMenuCallback(self.parent, toMenu, false)
             end
 
             toMenu.instance:setVisible(false)
@@ -196,6 +198,6 @@ end
 
 function FrameworkZ.UserInterfaces:Initialize(uniqueID, userInterface)
     self.List[uniqueID] = userInterface
-    
+
     return uniqueID
 end

@@ -1,5 +1,5 @@
 # Framework
-The core framework for Project Framework on Project Zomboid.
+The core framework for FrameworkZ on Project Zomboid.
 
 # Important Notice
-Project Framework is still very early in its development. A lot of the current codebase is subject to major changes.
+FrameworkZ is still very early in its development. A lot of the current codebase is subject to major changes.

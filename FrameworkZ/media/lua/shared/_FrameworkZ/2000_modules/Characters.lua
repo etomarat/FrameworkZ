@@ -74,19 +74,20 @@ CHARACTER.__index = CHARACTER
 --! \brief Initialize a character.
 --! \return \string username
 function CHARACTER:Initialize()
-	if not self.playerObj then return end
-    
-    local firstConnection = false
-    local characterModData = self.playerObj:getModData()["PFW_CHAR"] or nil
+	if not self.isoPlayer then return end
 
-    local inventory = FrameworkZ.Inventories:New(self.playerObj:getUsername())
+    local firstConnection = false
+    local characterModData = self.isoPlayer:getModData()["PFW_CHAR"] or nil
+
+    local inventory = FrameworkZ.Inventories:New(self.isoPlayer:getUsername())
     self.inventoryID = inventory:Initialize()
     self.inventory = inventory
 
     if not characterModData then
         firstConnection = true
 
-        self.playerObj:getModData()["PFW_CHAR"] = {
+        self.isoPlayer:getModData()["PFW_CHAR"] = {
+            id = self.id or -1,
             name = self.name or "Unknown",
             description = self.description or "No description available.",
             faction = self.faction or FACTION_CITIZEN,
@@ -102,7 +103,7 @@ function CHARACTER:Initialize()
         }
 
         if isClient() then
-            self.playerObj:transmitModData()
+            self.isoPlayer:transmitModData()
         end
     end
 
@@ -114,7 +115,7 @@ function CHARACTER:Initialize()
 
     if isClient() then
         timer:Simple(5, function()
-            sendClientCommand("PFW_CHAR", "initialize", {self.playerObj:getUsername()})
+            sendClientCommand("PFW_CHAR", "initialize", {self.isoPlayer:getUsername()})
         end)
     end
 
@@ -124,10 +125,10 @@ end
 --! \brief Destroy a character. This will remove the character from the list of characters and is usually called after a player has disconnected.
 function CHARACTER:Destroy()
     if isClient() then
-        sendClientCommand("PFW_CHAR", "destroy", {self.playerObj:getUsername()})
+        sendClientCommand("PFW_CHAR", "destroy", {self.isoPlayer:getUsername()})
     end
     
-    self.playerObj = nil
+    self.isoPlayer = nil
 end
 
 --! \brief Initialize the default items for a character based on their faction. Called when PFW_CHAR mod data is first created.
@@ -144,7 +145,7 @@ end
 --! \brief Validate the character's data.
 --! \return \boolean Whether or not any of the character's new data was initialized.
 function CHARACTER:ValidateCharacterData()
-    local characterModData = self.playerObj:getModData()["PFW_CHAR"]
+    local characterModData = self.isoPlayer:getModData()["PFW_CHAR"]
 
     if not characterModData then return false end
 
@@ -211,7 +212,7 @@ function CHARACTER:ValidateCharacterData()
     end
 
     if isClient() then
-        self.playerObj:transmitModData()
+        self.isoPlayer:transmitModData()
     end
 
     self.name = characterModData.name
@@ -232,11 +233,11 @@ end
 --! \param age \integer The age of the character.
 function CHARACTER:SetAge(age)
     self.age = age
-    self.playerObj:getModData()["PFW_CHAR"].age = age
-    self.playerObj:transmitModData()
+    self.isoPlayer:getModData()["PFW_CHAR"].age = age
+    self.isoPlayer:transmitModData()
 
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "age", age})
+        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "age", age})
     end
 end
 
@@ -244,11 +245,11 @@ end
 --! \param description \string The description of the character's appearance.
 function CHARACTER:SetDescription(description)
     self.description = description
-    self.playerObj:getModData()["PFW_CHAR"].description = description
-    self.playerObj:transmitModData()
+    self.isoPlayer:getModData()["PFW_CHAR"].description = description
+    self.isoPlayer:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "description", description})
+        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "description", description})
     end
 end
 
@@ -256,11 +257,11 @@ end
 --! \param faction \string The ID of the faction to set on the character.
 function CHARACTER:SetFaction(faction)
     self.faction = faction
-    self.playerObj:getModData()["PFW_CHAR"].faction = faction
-    self.playerObj:transmitModData()
+    self.isoPlayer:getModData()["PFW_CHAR"].faction = faction
+    self.isoPlayer:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "faction", faction})
+        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "faction", faction})
     end
 end
 
@@ -272,11 +273,11 @@ end
 --! \param name \string The new name for the character.
 function CHARACTER:SetName(name)
     self.name = name
-    self.playerObj:getModData()["PFW_CHAR"].name = name
-    self.playerObj:transmitModData()
+    self.isoPlayer:getModData()["PFW_CHAR"].name = name
+    self.isoPlayer:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.playerObj:getUsername(), "name", name})
+        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "name", name})
     end
 end
 
@@ -303,14 +304,14 @@ function CHARACTER:GiveItem(uniqueID)
     local item = FrameworkZ.Items:GetItemByID(uniqueID)
 
     if inventory and item then
-        local worldItem = self.playerObj:getInventory():AddItem(InventoryItemFactory.CreateItem(item.itemID))
+        local worldItem = self.isoPlayer:getInventory():AddItem(InventoryItemFactory.CreateItem(item.itemID))
         local instanceID = FrameworkZ.Items:AddInstance(item.itemID)
-        local itemInstance = FrameworkZ.Items:InitializeInstance(instanceID, item, self.playerObj, worldItem)
+        local itemInstance = FrameworkZ.Items:InitializeInstance(instanceID, item, self.isoPlayer, worldItem)
         local itemData = {
             uniqueID = itemInstance.uniqueID,
             itemID = worldItem:getFullType(),
             instanceID = instanceID,
-            owner = self.playerObj:getUsername(),
+            owner = self.isoPlayer:getUsername(),
             name = itemInstance.name or "Unknown",
             description = itemInstance.description or "No description available.",
             category = itemInstance.category or "Uncategorized",
@@ -342,7 +343,7 @@ function CHARACTER:TakeItem(itemID)
     local item = FrameworkZ.Items:GetItemByID(itemID)
 
     if item then
-        local inventory = self.playerObj:getInventory()
+        local inventory = self.isoPlayer:getInventory()
         local worldItem = inventory:getFirstTypeRecurse(item.id)
         local instanceID = worldItem:getModData()["PFW_ITM"].instanceID
 
@@ -363,7 +364,7 @@ function CHARACTER:TakeItemByInstanceID(itemID, instanceID)
     local item = FrameworkZ.Items:GetItemByID(itemID)
 
     if item then
-        local inventory = self.playerObj:getInventory()
+        local inventory = self.isoPlayer:getInventory()
         local worldItem = inventory:getFirstTypeRecurse(item.id) -- Search whole inventory for matching item instance ID or make an inventory module for more efficiency?
 
         FrameworkZ.Items:RemoveInstance(item.id, instanceID)
@@ -405,19 +406,23 @@ end
 
 --! \brief Create a new character object.
 --! \param username \string The player's username as their ID.
+--! \param id \integer The character's ID for the player stored data.
+--! \param data \table (Optional) The character's data stored on the object.
 --! \return \table The new character object.
-function FrameworkZ.Characters:New(username, data)
+function FrameworkZ.Characters:New(username, id, data)
     if not username then return false end
 
     local object
 
     if not data then
         object = {
-            username = username
+            username = username,
+            id = id or -1
         }
     else
         object = data
         object.username = username
+        object.id = id or -1
     end
 
     setmetatable(object, CHARACTER)
@@ -440,7 +445,7 @@ end
 --! \return \table The character object from the list of characters.
 function FrameworkZ.Characters:GetCharacterByID(username)
     local character = self.List[username] or nil
-    
+
     return character
 end
 
@@ -560,53 +565,38 @@ if isClient() then
         end)
     end
 
-    --! \brief Initializes a player's character after joining. Called by OnGameStart event hook.
-    --! \return \string The username of the new character's player.
-    function FrameworkZ.Characters:OnGameStart()
-        --local player = getPlayer()
-        --[[local cell = getWorld():getCell()
-        local x = cell:getMaxX()
-        local y = cell:getMaxY()
-        local z = 0
-        player:setInvincible(true)
-        player:setInvisible(true)
-        player:setGhostMode(true)
-        player:setNoClip(true)
-        player:setX(x)
-        player:setY(y)
-        player:setZ(z)
-	    player:setLx(x)
-	    player:setLy(y)
-	    player:setLz(z)
+    --! \brief Initializes a player's character after loading.
+    --! \return \boolean Whether or not the post load was successful.
+    function FrameworkZ.Characters:PostLoad(isoPlayer, characterID)
+        local username = isoPlayer:getUsername()
+        local character = FrameworkZ.Characters:New(username, characterID)
 
-        FrameworkZ.Characters:CreateCharacterTick(player, 1)
+        if not character then return false end
 
-        local ui = PFW_Introduction:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight(), getPlayer())
-        ui:initialise()
-        ui:addToUIManager()--]]
-
-        --[[
-        timer:Simple(FrameworkZ.Config.InitializationDuration, function()
-            local character = FrameworkZ.Characters:New(player:getUsername())
-
-            character.playerObj = player
-            
-            character:Initialize()
-
-            character:GiveItems("HL2RP_Suitcase", 3)
-            character:GiveItems("HL2RP_WeaponSuitcase", 3)
+        FrameworkZ.Characters:CreateCharacterTick(isoPlayer, 1)
+        character.isoPlayer = isoPlayer
+        character:Initialize()
+        timer:Create("FZ_CharacterSaveInterval", FrameworkZ.Config.CharacterSaveInterval, 0, function()
+            if FrameworkZ.Players:SaveCharacter(username, FrameworkZ.Players:GetCharacterDataByID(username, character.id)) then
+                if FrameworkZ.Config.ShouldNotifyOnCharacterSave then
+                    FrameworkZ.Notifications:AddToQueue("Successfully saved current character.", FrameworkZ.Notifications.Types.Success)
+                end
+            else
+                FrameworkZ.Notifications:AddToQueue("Failed to save current character.", FrameworkZ.Notifications.Types.Danger)
+            end
         end)
-        --]]
+
+        return true
     end
 
     --! \brief Destroys a character and removes them from the character list after disconnecting. Called by OnDisconnect event hook.
     function FrameworkZ.Characters:OnDisconnect()
         print("OnDisconnect")
-        
+
         local player = getPlayer()
         local username = player:getUsername()
         local character = FrameworkZ.Characters:GetCharacterByID(username)
-        
+
         if character then
             character:Destroy()
             print("Character destroyed")
@@ -629,7 +619,7 @@ if not isClient() then
                 local username = args[1]
                 local character = FrameworkZ.Characters:New(username)
 
-                character.playerObj = player
+                character.isoPlayer = player
                 character:Initialize()
             elseif command == "destroy" then
                 local username = args[1]

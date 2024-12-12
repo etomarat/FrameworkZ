@@ -2,6 +2,7 @@ require "ISUI/ISPanel"
 
 PFW_MainMenu = ISPanel:derive("PFW_MainMenu")
 
+local currentMainMenuSong = nil
 local nextLightning = 5
 
 function PFW_MainMenu:initialise()
@@ -30,7 +31,7 @@ function PFW_MainMenu:initialise()
 
     self.uiHelper = FrameworkZ.UI
     self.emitter = self.playerObject:getEmitter()
-	local title = FrameworkZ.Config.GamemodeTitle
+	local title = FrameworkZ.Config.GamemodeTitle .. " " .. FrameworkZ.Config.Version .. "-" .. FrameworkZ.Config.VersionType
     local subtitle = FrameworkZ.Config.GamemodeDescription
     local createCharacterLabel = "Create Character"
     local loadCharacterLabel = "Load Character"
@@ -39,7 +40,7 @@ function PFW_MainMenu:initialise()
     local middleY = self.height / 2 + FrameworkZ.UI.GetHeight(UIFont.Title, title) + FrameworkZ.UI.GetHeight(UIFont.Large, subtitle)
 
 	ISPanel.initialise(self)
-    self.emitter:playSoundImpl(FrameworkZ.Config.MainMenuMusic, nil)
+    currentMainMenuSong = self.emitter:playSoundImpl(FrameworkZ.Config.MainMenuMusic, nil)
 
     local stepWidth, stepHeight = 500, 600
     local stepX, stepY = self.width / 2 - stepWidth / 2, self.height / 2 - stepHeight / 2
@@ -48,10 +49,15 @@ function PFW_MainMenu:initialise()
     self.createCharacterSteps.onEnterInitialMenu = self.onEnterMainMenu
     self.createCharacterSteps.onExitInitialMenu = self.onExitMainMenu
     self.createCharacterSteps:Initialize()
-    self.createCharacterSteps:RegisterNextStep("MainMenu", "SelectFaction", self, PFW_CreateCharacterFaction, self.onEnterFactionMenu, self.onExitFactionMenu, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
-    self.createCharacterSteps:RegisterNextStep("SelectFaction", "EnterInfo", PFW_CreateCharacterFaction, PFW_CreateCharacterInfo, self.onEnterInfoMenu, self.onExitInfoMenu, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
-    self.createCharacterSteps:RegisterNextStep("EnterInfo", "CustomizeAppearance", PFW_CreateCharacterInfo, PFW_CreateCharacterAppearance, self.onEnterAppearanceMenu, self.onExitAppearanceMenu, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
-    self.createCharacterSteps:RegisterNextStep("CustomizeAppearance", "MainMenu", PFW_CreateCharacterAppearance, self, self.onFinalizeCharacter, nil, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
+
+    if PFW_MainMenu.customSteps then
+        PFW_MainMenu.customSteps()
+    else
+        self.createCharacterSteps:RegisterNextStep("MainMenu", "SelectFaction", self, PFW_CreateCharacterFaction, self.onEnterFactionMenu, self.onExitFactionMenu, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
+        self.createCharacterSteps:RegisterNextStep("SelectFaction", "EnterInfo", PFW_CreateCharacterFaction, PFW_CreateCharacterInfo, self.onEnterInfoMenu, self.onExitInfoMenu, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
+        self.createCharacterSteps:RegisterNextStep("EnterInfo", "CustomizeAppearance", PFW_CreateCharacterInfo, PFW_CreateCharacterAppearance, self.onEnterAppearanceMenu, self.onExitAppearanceMenu, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
+        self.createCharacterSteps:RegisterNextStep("CustomizeAppearance", "MainMenu", PFW_CreateCharacterAppearance, self, self.onFinalizeCharacter, nil, {x = stepX, y = stepY, width = stepWidth, height = stepHeight, playerObject = self.playerObject})
+    end
 
     self.titleY = self.uiHelper.GetHeight(UIFont.Title, title)
 
@@ -80,12 +86,33 @@ function PFW_MainMenu:initialise()
     --]]
 end
 
+local mainMenuMusicVolume = 1.0
+function PFW_MainMenu:fadeOutMainMenuMusic()
+    if self.emitter:isPlaying(currentMainMenuSong) then
+        mainMenuMusicVolume = mainMenuMusicVolume - 0.002
+        self.emitter:setVolume(currentMainMenuSong, mainMenuMusicVolume)
+
+        if mainMenuMusicVolume <= 0 then
+            timer:Remove("FadeOutMainMenuMusic")
+            self.emitter:stopSound(currentMainMenuSong)
+        end
+    end
+end
+
 function PFW_MainMenu:onClose()
+    timer:Create("FadeOutMainMenuMusic", 0.01, 0, function()
+        self:fadeOutMainMenuMusic()
+    end)
+
     self:setVisible(false)
     self:removeFromUIManager()
 end
 
 function PFW_MainMenu:onEnterMainMenu()
+    PFW_CreateCharacterInfo.instance = nil
+    PFW_CreateCharacterFaction.instance = nil
+    PFW_CreateCharacterAppearance.instance = nil
+
     self.createCharacterButton:setVisible(true)
     self.loadCharacterButton:setVisible(true)
     self.disconnectButton:setVisible(true)
@@ -145,7 +172,7 @@ function PFW_MainMenu:hideStepControls(backButton, forwardButton)
 end
 
 function PFW_MainMenu:onEnterFactionMenu(menu)
-    self:showStepControls(menu, "returnToMainMenu", self.returnToMainMenu, "< Main Menu", "enterInfoForward", self.enterInfoForward, "Info >")
+    self:showStepControls(menu, "returnToMainMenu", self.returnToMainMenu, "< Main Menu (Cancel)", "enterInfoForward", self.enterInfoForward, "Info >")
 end
 
 function PFW_MainMenu:onExitFactionMenu(menu)
@@ -158,7 +185,29 @@ function PFW_MainMenu:onEnterInfoMenu(menu)
     self:showStepControls(menu, "selectFaction", self.selectFaction, "< Faction", "customizeAppearance", self.customizeAppearance, "Appearance >")
 end
 
-function PFW_MainMenu:onExitInfoMenu(menu)
+function PFW_MainMenu:onExitInfoMenu(menu, isForward)
+    local infoInstance = PFW_CreateCharacterInfo.instance
+    local name = infoInstance.nameEntry:getText()
+    local description = infoInstance.descriptionEntry:getText()
+    local warningMessage = ""
+
+    if not name or name == "" then
+        warningMessage = warningMessage .. "Name must be filled in"
+    elseif #name < 8 then
+        warningMessage = warningMessage .. (warningMessage == "" and "" or " and ") .. "Name must be at least 8 characters"
+    end
+
+    if not description or description == "" then
+        warningMessage = warningMessage .. (warningMessage == "" and "" or " and ") .. "Description must be filled in"
+    elseif #description < 24 then
+        warningMessage = warningMessage .. (warningMessage == "" and "" or " and ") .. "Description must be at least 24 characters"
+    end
+
+    if warningMessage ~= "" and isForward then
+        FrameworkZ.Notifications:AddToQueue("Cannot proceed: " .. warningMessage, FrameworkZ.Notifications.Types.Warning, nil, self)
+        return false
+    end
+
     self:hideStepControls(self.selectFaction, self.customizeAppearance)
 
     return true
@@ -192,8 +241,8 @@ end
 function PFW_MainMenu:onFinalizeCharacter(menu)
     self:hideStepControls(self.enterInfoBack, self.finalizeCharacter)
 
-    local factionInstance = PFW_CreateCharacterFaction.instance
     local infoInstance = PFW_CreateCharacterInfo.instance
+    local factionInstance = PFW_CreateCharacterFaction.instance
     local appearanceInstance = PFW_CreateCharacterAppearance.instance
 
     local faction = factionInstance.faction
@@ -253,12 +302,7 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
         EQUIPMENT_SLOT_BELT = belt,
         EQUIPMENT_SLOT_PANTS = pants,
         EQUIPMENT_SLOT_SOCKS = socks,
-        EQUIPMENT_SLOT_SHOES = shoes,
-        rightHand = rightHand,
-        rightHandAccessory = rightHandAccessory,
-        leftHand = leftHand,
-        leftHandAccessory = leftHandAccessory,
-        inventory = {}
+        EQUIPMENT_SLOT_SHOES = shoes
     }
 
     local success, characterID = FrameworkZ.Players:CreateCharacter(self.playerObject:getUsername(), characterData)
@@ -276,11 +320,11 @@ function PFW_MainMenu:onEnterLoadCharacterMenu()
     local player = FrameworkZ.Players:GetPlayerByID(self.playerObject:getUsername())
 
     if not player then
-        FrameworkZ.Notifications:AddToQueue("Failed to load characters.", nil, FrameworkZ.Notifications.Types.Danger, self)
+        FrameworkZ.Notifications:AddToQueue("Failed to load characters.", FrameworkZ.Notifications.Types.Danger, nil, self)
 
         return false
     elseif #player.characters <= 0 then
-        FrameworkZ.Notifications:AddToQueue("No characters found.", nil, FrameworkZ.Notifications.Types.Warning, self)
+        FrameworkZ.Notifications:AddToQueue("No characters found.", FrameworkZ.Notifications.Types.Warning, nil, self)
 
         return false
     end
@@ -298,6 +342,7 @@ function PFW_MainMenu:onEnterLoadCharacterMenu()
         self:addChild(self.loadCharacterMenu)
     else
         self.loadCharacterMenu:setVisible(true)
+        self.loadCharacterMenu:updateCharacterPreview()
     end
 
     if not self.loadCharacterBackButton then
@@ -337,7 +382,21 @@ function PFW_MainMenu:onEnterMainMenuFromLoadCharacterMenu()
 end
 
 function PFW_MainMenu:onLoadCharacter()
-    
+    local character = self.loadCharacterMenu.selectedCharacter.character
+
+    if not character then
+        FrameworkZ.Notifications:AddToQueue("No character selected.", FrameworkZ.Notifications.Types.Warning, nil, self)
+        return
+    end
+
+    local success = FrameworkZ.Players:LoadCharacter(self.playerObject:getUsername(), character, self.loadCharacterMenu.selectedCharacter.survivor)
+
+    if success then
+        FrameworkZ.Notifications:AddToQueue("Successfully loaded character " .. character.INFO_NAME .. " #" .. character.META_ID .. ".")
+        self:onClose()
+    else
+        FrameworkZ.Notifications:AddToQueue("Failed to load character.", FrameworkZ.Notifications.Types.Danger, nil, self)
+    end
 end
 
 function PFW_MainMenu:onDisconnect()
@@ -386,6 +445,10 @@ end
 
 function PFW_MainMenu:update()
     ISPanel.update(self)
+
+    if not self.emitter:isPlaying(currentMainMenuSong) then
+        currentMainMenuSong = self.emitter:playSoundImpl(FrameworkZ.Config.MainMenuMusic, nil)
+    end
 end
 
 function PFW_MainMenu:new(x, y, width, height, playerObject)
