@@ -303,24 +303,6 @@ function FrameworkZ.Foundation:RegisterHandler(hookName, handler, object, functi
     category = category or HOOK_CATEGORY_GENERIC
     self.RegisteredHooks[category][hookName] = self.RegisteredHooks[category][hookName] or {}
 
-	--[[
-    -- Check if the handler is already registered
-    for _, registeredHandler in ipairs(self.RegisteredHooks[category][hookName]) do
-        if object and functionName then
-            if registeredHandler.object == object and registeredHandler.functionName == functionName then
-                -- Handler is already registered; do not add again
-                return
-            end
-        else
-            if registeredHandler == handler then
-                -- Handler is already registered; do not add again
-                return
-            end
-        end
-    end
-	--]]
-
-    -- If not registered, add the handler
     if object and functionName then
         table.insert(self.RegisteredHooks[category][hookName], {
             handler = function(...)
@@ -520,22 +502,49 @@ end
 	HOOKS ADDITIONS
 --]]
 
-if isClient() then
-    --! \brief Called when the game starts. Executes the OnGameStart function for all modules.
-	function FrameworkZ.Foundation:OnGameStart()
-		FrameworkZ.Foundation.ExecuteFrameworkHooks("InitializeClient", getPlayer())
-	end
 
-    function FrameworkZ.Foundation:InitializeClient(isoPlayer)
-        FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient", isoPlayer)
-		FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient", isoPlayer)
-		FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient", isoPlayer)
-	end
-    FrameworkZ.Foundation:AddHookHandler("InitializeClient", HOOK_CATEGORY_FRAMEWORK)
-    FrameworkZ.Foundation:AddHookHandler("InitializeClient", HOOK_CATEGORY_MODULE)
-    FrameworkZ.Foundation:AddHookHandler("InitializeClient", HOOK_CATEGORY_GAMEMODE)
-    FrameworkZ.Foundation:AddHookHandler("InitializeClient", HOOK_CATEGORY_PLUGIN)
+--! \brief Called when the game starts. Executes the OnGameStart function for all modules.
+function FrameworkZ.Foundation:OnGameStart()
+    FrameworkZ.Foundation.ExecuteFrameworkHooks("PreInitializeClient", getPlayer())
 end
+
+function FrameworkZ.Foundation:PreInitializeClient(isoPlayer)
+    FrameworkZ.Foundation.ExecuteModuleHooks("PreInitializeClient", isoPlayer)
+    FrameworkZ.Foundation.ExecuteGamemodeHooks("PreInitializeClient", isoPlayer)
+    FrameworkZ.Foundation.ExecutePluginHooks("PreInitializeClient", isoPlayer)
+
+    FrameworkZ.Foundation.ExecuteFrameworkHooks("InitializeClient", isoPlayer)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("PreInitializeClient")
+
+function FrameworkZ.Foundation:InitializeClient(isoPlayer)
+    timer:Simple(FrameworkZ.Config.InitializationDuration, function()
+        FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient", isoPlayer)
+        FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient", isoPlayer)
+        FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient", isoPlayer)
+
+        FrameworkZ.Foundation.ExecuteFrameworkHooks("PostInitializeClient", isoPlayer)
+    end)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("InitializeClient")
+
+function FrameworkZ.Foundation:PostInitializeClient(isoPlayer)
+    FrameworkZ.Foundation.ExecuteModuleHooks("PostInitializeClient", isoPlayer)
+    FrameworkZ.Foundation.ExecuteGamemodeHooks("PostInitializeClient", isoPlayer)
+    FrameworkZ.Foundation.ExecutePluginHooks("PostInitializeClient", isoPlayer)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("PostInitializeClient")
+
+function FrameworkZ.Foundation:OnMainMenuEnter()
+    FrameworkZ.Foundation.ExecuteFrameworkHooks("OnOpenEscapeMenu", getPlayer())
+end
+
+function FrameworkZ.Foundation:OnOpenEscapeMenu(isoPlayer)
+    FrameworkZ.Foundation.ExecuteModuleHooks("OnOpenEscapeMenu", isoPlayer)
+    FrameworkZ.Foundation.ExecuteGamemodeHooks("OnOpenEscapeMenu", isoPlayer)
+    FrameworkZ.Foundation.ExecutePluginHooks("OnOpenEscapeMenu", isoPlayer)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("OnOpenEscapeMenu")
 
 if not isClient() then
 

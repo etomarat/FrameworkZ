@@ -7,6 +7,11 @@ function FrameworkZ.OnConnected()
 end
 Events.OnConnected.Add(FrameworkZ.OnConnected)
 
+function FrameworkZ.OnMainMenuEnter()
+    FrameworkZ.Foundation.ExecuteAllHooks("OnMainMenuEnter")
+end
+Events.OnMainMenuEnter.Add(FrameworkZ.OnMainMenuEnter)
+
 function FrameworkZ.OnPlayerDeath(player)
     FrameworkZ.Foundation.ExecuteAllHooks("OnPlayerDeath")
 end
@@ -32,13 +37,7 @@ Events.LoadGridsquare.Add(FrameworkZ.Foundation.LoadGridsquare)
 FrameworkZ.Foundation:AddAllHookHandlers("LoadGridsquare")
 
 function FrameworkZ.OnDisconnect()
-    FrameworkZ.Foundation.ExecuteAllHooks("LoadGridsquare")
-
-    --[[for k, v in pairs(FrameworkZ.Modules) do
-        if v.OnDisconnect then
-            v.OnDisconnect(v)
-        end
-    end--]]
+    FrameworkZ.Foundation.ExecuteAllHooks("OnDisconnect")
 end
 Events.OnDisconnect.Add(FrameworkZ.OnDisconnect)
 FrameworkZ.Foundation:AddAllHookHandlers("OnDisconnect")

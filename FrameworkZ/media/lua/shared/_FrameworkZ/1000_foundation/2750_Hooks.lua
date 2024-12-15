@@ -3,7 +3,7 @@ FrameworkZ.Hooks = {}
 FrameworkZ.Hooks = FrameworkZ.Foundation:NewModule(FrameworkZ.Hooks, "Hooks")
 
 if isClient() then
-    function FrameworkZ.Hooks:InitializeClient(isoPlayer)
+    function FrameworkZ.Hooks:PreInitializeClient(isoPlayer)
         local username = isoPlayer:getUsername()
 
         timer:Simple(0.1, function()

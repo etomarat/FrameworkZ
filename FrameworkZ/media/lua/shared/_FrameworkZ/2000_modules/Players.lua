@@ -57,21 +57,64 @@ function PLAYER:Initialize()
 
     self:ValidatePlayerData()
 
-    if isClient() then
+    --[[if isClient() then
         timer:Simple(5, function()
             sendClientCommand("FZ_PLY", "initialize", {self.isoPlayer:getUsername()})
         end)
-    end
+    end--]]
 
     return FrameworkZ.Players:Initialize(self.username, self)
 end
 
-function PLAYER:Destroy()
-    if isClient() then
-        sendClientCommand("FZ_PLY", "destroy", {self.isoPlayer:getUsername()})
+--! \brief Saves the player's data.
+--! \param shouldTransmit \boolean (Optional) Whether or not to transmit the player's data to the server.
+--! \return \boolean Whether or not the player was successfully saved.
+--! \todo Test if localized variable (playerData) maintains referential integrity for transmitModData() to work on it.
+function PLAYER:Save(shouldTransmit)
+    if shouldTransmit == nil then shouldTransmit = true end
+
+    if not self.isoPlayer then return false end
+
+    local playerData = self:GetStoredData()
+
+    if not playerData then return false end
+
+    playerData.role = self.role
+    playerData.maxCharacters = self.maxCharacters
+    playerData.previousCharacter = self.previousCharacter
+    playerData.whitelists = self.whitelists
+    playerData.characters = self.characters
+
+    if shouldTransmit then
+        self.isoPlayer:transmitModData()
     end
 
-    self = nil
+    return true
+end
+
+function PLAYER:Destroy()
+    if not self.isoPlayer then return false, "Critical save fail: Iso Player is nil." end
+
+    local username = self.isoPlayer:getUsername()
+    local success1, success2, message
+
+    if FrameworkZ.Players.List[username] then
+        success1, message = FrameworkZ.Players:Save(username)
+    end
+
+    if FrameworkZ.Characters.List[username] then
+        FrameworkZ.Characters.List[username] = nil
+    end
+
+    if FrameworkZ.Players.List[username] then
+        FrameworkZ.Players.List[username] = nil
+    end
+
+    if success1 and success2 then
+        return true, message
+    end
+
+    return false, message
 end
 
 function PLAYER:InitializeDefaultFactionWhitelists()
@@ -184,14 +227,15 @@ function PLAYER:StopSound(soundNameOrID)
     end
 end
 
-function FrameworkZ.Players:New(username, isoPlayer)
-    if not username or not isoPlayer then return false end
+function FrameworkZ.Players:New(isoPlayer)
+    if not isoPlayer then return false end
 
     local object = {
-        username = username,
+        username = isoPlayer:getUsername(),
         isoPlayer = isoPlayer,
         steamID = isoPlayer:getSteamID(),
         role = FrameworkZ.Players.Roles.User,
+        loadedCharacter = nil,
         maxCharacters = FrameworkZ.Config.DefaultMaxCharacters,
         previousCharacter = nil,
         whitelists = {},
@@ -204,7 +248,7 @@ function FrameworkZ.Players:New(username, isoPlayer)
 end
 
 function FrameworkZ.Players:Initialize(username, player)
-    FrameworkZ.Players.List[username] = player
+    self.List[username] = player
 
     return username
 end
@@ -212,7 +256,7 @@ end
 function FrameworkZ.Players:GetPlayerByID(username)
     if not username then return false end
 
-    local player = FrameworkZ.Players.List[username]
+    local player = self.List[username]
 
     if player then
         return player
@@ -241,19 +285,22 @@ function FrameworkZ.Players:GetCharacterDataByID(username, characterID)
     return false
 end
 
+function FrameworkZ.Players:ResetCharacterSaveInterval()
+    if timer:Exists("FZ_CharacterSaveInterval") then
+        timer:Start("FZ_CharacterSaveInterval")
+    end
+end
+
 function FrameworkZ.Players:CreateCharacter(username, data)
     if not username or not data then return false end
 
     local player = self:GetPlayerByID(username)
 
     if player and player.characters then
+        FrameworkZ.Players:ResetCharacterSaveInterval()
+
         data.META_ID = #player.characters + 1
         data.META_FIRST_LOAD = true
-
-        -- Pause character save interval to prevent data inconsistencies (if created character while character is currently loaded)
-        if timer:Exists("FZ_CharacterSaveInterval") then
-            timer:Pause("FZ_CharacterSaveInterval")
-        end
 
         table.insert(player.characters, data)
         player:GetStoredData().characters = player.characters
@@ -262,16 +309,73 @@ function FrameworkZ.Players:CreateCharacter(username, data)
             player.isoPlayer:transmitModData()
         end
 
-        if timer:Exists("FZ_CharacterSaveInterval") then
-            timer:Simple(10, function()
-                timer:Resume("FZ_CharacterSaveInterval")
-            end)
-        end
-
         return true, #player.characters
     end
 
     return false
+end
+
+--! \brief Saves the player and their currently loaded character.
+--! \param username \string The username of the player.
+--! \param continueOnFailure \boolean (Optional) Whether or not to continue saving either the player or character if either should fail. Default = false. True not recommended.
+--! \return \boolean Whether or not the player was successfully saved.
+--! \return \string The failure message if the player or character failed to save.
+function FrameworkZ.Players:Save(username, continueOnFailure)
+    if continueOnFailure == nil then continueOnFailure = false end
+
+    local player = FrameworkZ.Players:GetPlayerByID(username)
+
+    if not player then return false end
+
+    local saved = false
+    local failureMessage = ""
+    local character = player.loadedCharacter
+    local characterSaved = false
+    local playerSaved = player:Save(false)
+    saved = playerSaved
+
+    if not saved and not continueOnFailure then
+        return false, "Failed to save player data."
+    elseif not saved and continueOnFailure then
+        failureMessage = "Failed to save player data."
+    end
+
+    if character then
+        characterSaved = character:Save(false)
+        saved = characterSaved
+
+        if not saved and not continueOnFailure then
+            return false, "Failed to save character data."
+        elseif not saved and continueOnFailure then
+            failureMessage = failureMessage == "Failed to save player data." and "Failed to save both player data and character data." or "Player data saved, but failed to save character data."
+        end
+    else
+        characterSaved = true -- No character loaded, set true to prevent returning false.
+    end
+
+    if isClient() then
+        player.isoPlayer:transmitModData()
+    end
+
+    if playerSaved and characterSaved then
+        saved = true
+    else
+        saved = false
+    end
+
+    return saved, failureMessage
+end
+
+function FrameworkZ.Players:Destroy(username)
+    local properlyDestroyed = false
+    local message = "Failed to destroy player."
+    local player = self:GetPlayerByID(username)
+
+    if player then
+        properlyDestroyed, message = player:Destroy()
+    end
+
+    return properlyDestroyed, message
 end
 
 function FrameworkZ.Players:SaveCharacter(username, character)
@@ -280,7 +384,6 @@ function FrameworkZ.Players:SaveCharacter(username, character)
     if not player or not character then return false end
 
     local isoPlayer = player.isoPlayer
-    local survivorDescriptor = isoPlayer:getDescriptor()
 
     character.INVENTORY_ITEMS = {}
     local inventory = isoPlayer:getInventory():getItems()
@@ -288,18 +391,18 @@ function FrameworkZ.Players:SaveCharacter(username, character)
         table.insert(character.INVENTORY_ITEMS, {id = inventory:get(i):getFullType()})
     end
 
-    character.EQUIPMENT_SLOT_HEAD = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_HEAD) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_HEAD):getFullType()} or nil
-    character.EQUIPMENT_SLOT_FACE = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_FACE) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_FACE):getFullType()} or nil
-    character.EQUIPMENT_SLOT_EARS = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_EARS) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_EARS):getFullType()} or nil
-    character.EQUIPMENT_SLOT_BACKPACK = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_BACKPACK) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_BACKPACK):getFullType()} or nil
-    character.EQUIPMENT_SLOT_GLOVES = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_GLOVES) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_GLOVES):getFullType()} or nil
-    character.EQUIPMENT_SLOT_UNDERSHIRT = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_UNDERSHIRT) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_UNDERSHIRT):getFullType()} or nil
-    character.EQUIPMENT_SLOT_OVERSHIRT = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_OVERSHIRT) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_OVERSHIRT):getFullType()} or nil
-    character.EQUIPMENT_SLOT_VEST = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_VEST) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_VEST):getFullType()} or nil
-    character.EQUIPMENT_SLOT_BELT = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_BELT) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_BELT):getFullType()} or nil
-    character.EQUIPMENT_SLOT_PANTS = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_PANTS) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_PANTS):getFullType()} or nil
-    character.EQUIPMENT_SLOT_SOCKS = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_SOCKS) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_SOCKS):getFullType()} or nil
-    character.EQUIPMENT_SLOT_SHOES = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_SHOES) and {id = survivorDescriptor:getWornItem(EQUIPMENT_SLOT_SHOES):getFullType()} or nil
+    character.EQUIPMENT_SLOT_HEAD = isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD):getFullType()} or nil
+    character.EQUIPMENT_SLOT_FACE = isoPlayer:getWornItem(EQUIPMENT_SLOT_FACE) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_FACE):getFullType()} or nil
+    character.EQUIPMENT_SLOT_EARS = isoPlayer:getWornItem(EQUIPMENT_SLOT_EARS) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_EARS):getFullType()} or nil
+    character.EQUIPMENT_SLOT_BACKPACK = isoPlayer:getWornItem(EQUIPMENT_SLOT_BACKPACK) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_BACKPACK):getFullType()} or nil
+    character.EQUIPMENT_SLOT_GLOVES = isoPlayer:getWornItem(EQUIPMENT_SLOT_GLOVES) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_GLOVES):getFullType()} or nil
+    character.EQUIPMENT_SLOT_UNDERSHIRT = isoPlayer:getWornItem(EQUIPMENT_SLOT_UNDERSHIRT) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_UNDERSHIRT):getFullType()} or nil
+    character.EQUIPMENT_SLOT_OVERSHIRT = isoPlayer:getWornItem(EQUIPMENT_SLOT_OVERSHIRT) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_OVERSHIRT):getFullType()} or nil
+    character.EQUIPMENT_SLOT_VEST = isoPlayer:getWornItem(EQUIPMENT_SLOT_VEST) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_VEST):getFullType()} or nil
+    character.EQUIPMENT_SLOT_BELT = isoPlayer:getWornItem(EQUIPMENT_SLOT_BELT) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_BELT):getFullType()} or nil
+    character.EQUIPMENT_SLOT_PANTS = isoPlayer:getWornItem(EQUIPMENT_SLOT_PANTS) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_PANTS):getFullType()} or nil
+    character.EQUIPMENT_SLOT_SOCKS = isoPlayer:getWornItem(EQUIPMENT_SLOT_SOCKS) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_SOCKS):getFullType()} or nil
+    character.EQUIPMENT_SLOT_SHOES = isoPlayer:getWornItem(EQUIPMENT_SLOT_SHOES) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_SHOES):getFullType()} or nil
 
     -- Save character position/direction angle
     character.POSITION_X = isoPlayer:getX()
@@ -353,15 +456,15 @@ end
         8. Post load
         9. Return true
 --]]
-function FrameworkZ.Players:LoadCharacter(username, character, survivorDescriptor)
+function FrameworkZ.Players:LoadCharacter(username, characterData, survivorDescriptor)
     local player = FrameworkZ.Players:GetPlayerByID(username)
 
-    if not player or not character then return false end
+    if not player or not characterData then return false end
 
     local isoPlayer = player.isoPlayer
 
-    if character.META_FIRST_LOAD == true then
-        character.META_FIRST_LOAD = false
+    if characterData.META_FIRST_LOAD == true then
+        characterData.META_FIRST_LOAD = false
 
         isoPlayer:setX(FrameworkZ.Config.SpawnX)
         isoPlayer:setY(FrameworkZ.Config.SpawnY)
@@ -370,22 +473,22 @@ function FrameworkZ.Players:LoadCharacter(username, character, survivorDescripto
         isoPlayer:setLy(FrameworkZ.Config.SpawnY)
         isoPlayer:setLz(FrameworkZ.Config.SpawnZ)
     else
-        isoPlayer:setX(character.POSITION_X)
-        isoPlayer:setY(character.POSITION_Y)
-        isoPlayer:setZ(character.POSITION_Z)
-        isoPlayer:setLx(character.POSITION_X)
-        isoPlayer:setLy(character.POSITION_Y)
-        isoPlayer:setLz(character.POSITION_Z)
-        isoPlayer:setDirectionAngle(character.DIRECTION_ANGLE)
+        isoPlayer:setX(characterData.POSITION_X)
+        isoPlayer:setY(characterData.POSITION_Y)
+        isoPlayer:setZ(characterData.POSITION_Z)
+        isoPlayer:setLx(characterData.POSITION_X)
+        isoPlayer:setLy(characterData.POSITION_Y)
+        isoPlayer:setLz(characterData.POSITION_Z)
+        isoPlayer:setDirectionAngle(characterData.DIRECTION_ANGLE)
     end
 
     isoPlayer:clearWornItems()
     isoPlayer:getInventory():clear()
 
-    for k, v in pairs(character) do
+    for k, v in pairs(characterData) do
         if string.match(k, "EQUIPMENT_SLOT_") then
-            if v then
-                local item = isoPlayer:getInventory():AddItem(v)
+            if v and v.id then
+                local item = isoPlayer:getInventory():AddItem(v.id)
                 isoPlayer:setWornItem(item:getBodyLocation(), item)
             end
         end
@@ -411,8 +514,12 @@ function FrameworkZ.Players:LoadCharacter(username, character, survivorDescripto
         VoiceManager:playerSetMute(username)
     end
 
-    if not FrameworkZ.Characters:PostLoad(isoPlayer, character.META_ID) then return false end
-    if not self:SaveCharacter(username, character) then return false end
+    local postLoadSuccessful, character = FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
+
+    if not postLoadSuccessful then return false end
+    if not self:SaveCharacter(username, characterData) then return false end
+
+    player.loadedCharacter = character
 
     return true
 end
@@ -429,16 +536,11 @@ function FrameworkZ.Players:DeleteCharacterByID(username, characterID)
 
 end
 
-if isClient() then
-    function FrameworkZ.Players:InitializeClient(isoPlayer)
-        timer:Simple(FrameworkZ.Config.InitializationDuration, function()
-            local player = FrameworkZ.Players:New(isoPlayer:getUsername(), isoPlayer)
+function FrameworkZ.Players:InitializeClient(isoPlayer)
+    local player = FrameworkZ.Players:New(isoPlayer)
 
-            if player then
-                player:Initialize()
-                --sendClientCommand("FZ_PLY", "initialize", {player.isoPlayer:getUsername()})
-            end
-        end)
+    if player then
+        player:Initialize()
     end
 end
 
@@ -446,8 +548,7 @@ if not isClient() then
     function FrameworkZ.Players.OnClientCommand(module, command, isoPlayer, args)
         if module == "FZ_PLY" then
             if command == "initialize" then
-                local username = args[1]
-                local player = FrameworkZ.Players:New(username, isoPlayer)
+                local player = FrameworkZ.Players:New(isoPlayer)
 
                 if player then
                     player:Initialize()

@@ -77,7 +77,7 @@ function CHARACTER:Initialize()
 	if not self.isoPlayer then return end
 
     local firstConnection = false
-    local characterModData = self.isoPlayer:getModData()["PFW_CHAR"] or nil
+    local characterModData = self.isoPlayer:getModData()["FZ_CHAR"] or nil
 
     local inventory = FrameworkZ.Inventories:New(self.isoPlayer:getUsername())
     self.inventoryID = inventory:Initialize()
@@ -86,7 +86,7 @@ function CHARACTER:Initialize()
     if not characterModData then
         firstConnection = true
 
-        self.isoPlayer:getModData()["PFW_CHAR"] = {
+        self.isoPlayer:getModData()["FZ_CHAR"] = {
             id = self.id or -1,
             name = self.name or "Unknown",
             description = self.description or "No description available.",
@@ -115,23 +115,94 @@ function CHARACTER:Initialize()
 
     if isClient() then
         timer:Simple(5, function()
-            sendClientCommand("PFW_CHAR", "initialize", {self.isoPlayer:getUsername()})
+            sendClientCommand("FZ_CHAR", "initialize", {self.isoPlayer:getUsername()})
         end)
     end
 
     return FrameworkZ.Characters:Initialize(self.username, self)
 end
 
+--! \brief Save the character's data from the character object.
+--! \param shouldTransmit \boolean (Optional) Whether or not to transmit the character's data to the server.
+--! \return \boolean Whether or not the character was successfully saved.
+function CHARACTER:Save(shouldTransmit)
+    if shouldTransmit == nil then shouldTransmit = true end
+
+    local player = FrameworkZ.Players:GetPlayerByID(self.isoPlayer:getUsername())
+    local characterData = FrameworkZ.Players:GetCharacterDataByID(self.isoPlayer:getUsername(), self.id)
+
+    if not player or not characterData then return false end
+    FrameworkZ.Players:ResetCharacterSaveInterval()
+
+    -- Save character inventory
+    local inventory = self.isoPlayer:getInventory():getItems()
+    characterData.INVENTORY_ITEMS = {}
+    for i = 0, inventory:size() - 1 do
+        table.insert(characterData.INVENTORY_ITEMS, {id = inventory:get(i):getFullType()})
+    end
+
+    -- Save character equipment
+    characterData.EQUIPMENT_SLOT_HEAD = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_FACE = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_FACE) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_FACE):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_EARS = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_EARS) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_EARS):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_BACKPACK = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_BACKPACK) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_BACKPACK):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_GLOVES = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_GLOVES) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_GLOVES):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_UNDERSHIRT = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_UNDERSHIRT) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_UNDERSHIRT):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_OVERSHIRT = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_OVERSHIRT) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_OVERSHIRT):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_VEST = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_VEST) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_VEST):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_BELT = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_BELT) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_BELT):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_PANTS = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_PANTS) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_PANTS):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_SOCKS = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_SOCKS) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_SOCKS):getFullType()} or nil
+    characterData.EQUIPMENT_SLOT_SHOES = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_SHOES) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_SHOES):getFullType()} or nil
+
+    -- Save character position/direction angle
+    characterData.POSITION_X = self.isoPlayer:getX()
+    characterData.POSITION_Y = self.isoPlayer:getY()
+    characterData.POSITION_Z = self.isoPlayer:getZ()
+    characterData.DIRECTION_ANGLE = self.isoPlayer:getDirectionAngle()
+
+    local getStats = self.isoPlayer:getStats()
+    characterData.STAT_HUNGER = getStats:getHunger()
+    characterData.STAT_THIRST = getStats:getThirst()
+    characterData.STAT_FATIGUE = getStats:getFatigue()
+    characterData.STAT_STRESS = getStats:getStress()
+    characterData.STAT_PAIN = getStats:getPain()
+    characterData.STAT_PANIC = getStats:getPanic()
+    characterData.STAT_BOREDOM = getStats:getBoredom()
+    --characterData.STAT_UNHAPPINESS = getStats:getUnhappyness()
+    characterData.STAT_DRUNKENNESS = getStats:getDrunkenness()
+    characterData.STAT_ENDURANCE = getStats:getEndurance()
+    --characterData.STAT_TIREDNESS = getStats:getTiredness()
+
+    --[[
+    modData.status.health = character:getBodyDamage():getOverallBodyHealth()
+    modData.status.injuries = character:getBodyDamage():getInjurySeverity()
+    modData.status.hyperthermia = character:getBodyDamage():getTemperature()
+    modData.status.hypothermia = character:getBodyDamage():getColdStrength()
+    modData.status.wetness = character:getBodyDamage():getWetness()
+    modData.status.hasCold = character:getBodyDamage():HasACold()
+    modData.status.sick = character:getBodyDamage():getSicknessLevel()
+    --]]
+
+    player:GetStoredData().characters[self.id] = characterData
+
+    if isClient() and shouldTransmit == true then
+        self.isoPlayer:transmitModData()
+    end
+
+    return true
+end
+
 --! \brief Destroy a character. This will remove the character from the list of characters and is usually called after a player has disconnected.
 function CHARACTER:Destroy()
     if isClient() then
-        sendClientCommand("PFW_CHAR", "destroy", {self.isoPlayer:getUsername()})
+        sendClientCommand("FZ_CHAR", "destroy", {self.isoPlayer:getUsername()})
     end
     
     self.isoPlayer = nil
 end
 
---! \brief Initialize the default items for a character based on their faction. Called when PFW_CHAR mod data is first created.
+--! \brief Initialize the default items for a character based on their faction. Called when FZ_CHAR mod data is first created.
 function CHARACTER:InitializeDefaultItems()
     local faction = FrameworkZ.Factions:GetFactionByID(self.faction)
 
@@ -145,7 +216,7 @@ end
 --! \brief Validate the character's data.
 --! \return \boolean Whether or not any of the character's new data was initialized.
 function CHARACTER:ValidateCharacterData()
-    local characterModData = self.isoPlayer:getModData()["PFW_CHAR"]
+    local characterModData = self.isoPlayer:getModData()["FZ_CHAR"]
 
     if not characterModData then return false end
 
@@ -233,11 +304,11 @@ end
 --! \param age \integer The age of the character.
 function CHARACTER:SetAge(age)
     self.age = age
-    self.isoPlayer:getModData()["PFW_CHAR"].age = age
+    self.isoPlayer:getModData()["FZ_CHAR"].age = age
     self.isoPlayer:transmitModData()
 
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "age", age})
+        sendClientCommand("FZ_CHAR", "update", {self.isoPlayer:getUsername(), "age", age})
     end
 end
 
@@ -245,11 +316,11 @@ end
 --! \param description \string The description of the character's appearance.
 function CHARACTER:SetDescription(description)
     self.description = description
-    self.isoPlayer:getModData()["PFW_CHAR"].description = description
+    self.isoPlayer:getModData()["FZ_CHAR"].description = description
     self.isoPlayer:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "description", description})
+        sendClientCommand("FZ_CHAR", "update", {self.isoPlayer:getUsername(), "description", description})
     end
 end
 
@@ -257,11 +328,11 @@ end
 --! \param faction \string The ID of the faction to set on the character.
 function CHARACTER:SetFaction(faction)
     self.faction = faction
-    self.isoPlayer:getModData()["PFW_CHAR"].faction = faction
+    self.isoPlayer:getModData()["FZ_CHAR"].faction = faction
     self.isoPlayer:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "faction", faction})
+        sendClientCommand("FZ_CHAR", "update", {self.isoPlayer:getUsername(), "faction", faction})
     end
 end
 
@@ -273,11 +344,11 @@ end
 --! \param name \string The new name for the character.
 function CHARACTER:SetName(name)
     self.name = name
-    self.isoPlayer:getModData()["PFW_CHAR"].name = name
+    self.isoPlayer:getModData()["FZ_CHAR"].name = name
     self.isoPlayer:transmitModData()
     
     if isClient() then
-        sendClientCommand("PFW_CHAR", "update", {self.isoPlayer:getUsername(), "name", name})
+        sendClientCommand("FZ_CHAR", "update", {self.isoPlayer:getUsername(), "name", name})
     end
 end
 
@@ -406,7 +477,7 @@ end
 
 --! \brief Create a new character object.
 --! \param username \string The player's username as their ID.
---! \param id \integer The character's ID for the player stored data.
+--! \param id \integer The character's ID from the player stored data.
 --! \param data \table (Optional) The character's data stored on the object.
 --! \return \table The new character object.
 function FrameworkZ.Characters:New(username, id, data)
@@ -440,13 +511,66 @@ function FrameworkZ.Characters:Initialize(username, character)
     return username
 end
 
---! \brief Get a character by their ID (i.e. username).
+--! \brief Gets the user's loaded character by their ID.
 --! \param username \string The player's username to get their character object with.
 --! \return \table The character object from the list of characters.
 function FrameworkZ.Characters:GetCharacterByID(username)
     local character = self.List[username] or nil
 
     return character
+end
+
+--! \brief Saves the user's currently loaded character.
+--! \param username \string The player's username to get their loaded character from.
+--! \return \boolean Whether or not the character was successfully saved.
+function FrameworkZ.Characters:Save(username)
+    if not username then return false end
+
+    local character = self:GetCharacterByID(username)
+
+    if character then
+        return character:Save()
+    end
+
+    return false
+end
+
+--! \brief Initializes a player's character after loading.
+--! \return \boolean Whether or not the post load was successful.
+function FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
+    local username = isoPlayer:getUsername()
+
+    local character = FrameworkZ.Characters:New(username, characterData.META_ID)
+
+    if not character then return false end
+
+    FrameworkZ.Characters:CreateCharacterTick(isoPlayer, 1)
+    character.isoPlayer = isoPlayer
+    character.name = characterData.INFO_NAME
+    character.description = characterData.INFO_DESCRIPTION
+    character.faction = characterData.INFO_FACTION
+    character.age = characterData.INFO_AGE
+    character.heightInches = characterData.INFO_HEIGHT
+    character.eyeColor = characterData.INFO_EYE_COLOR
+    character.hairColor = characterData.INFO_HAIR_STYLE
+    character.skinColor = characterData.INFO_SKIN_COLOR
+    character.physique = characterData.INFO_PHYSIQUE
+    character.weight = characterData.INFO_WEIGHT
+    character:Initialize()
+
+    timer:Create("FZ_CharacterSaveInterval", FrameworkZ.Config.CharacterSaveInterval, 0, function()
+        local success, message = FrameworkZ.Players:Save(username)
+        
+        if success then
+            if FrameworkZ.Config.ShouldNotifyOnCharacterSave then
+                FrameworkZ.Notifications:AddToQueue("Successfully saved current character.", FrameworkZ.Notifications.Types.Success)
+            end
+        else
+            FrameworkZ.Notifications:AddToQueue(message, FrameworkZ.Notifications.Types.Danger)
+        end
+    end)
+
+    return true, character
 end
 
 if isClient() then
@@ -564,46 +688,6 @@ if isClient() then
             end
         end)
     end
-
-    --! \brief Initializes a player's character after loading.
-    --! \return \boolean Whether or not the post load was successful.
-    function FrameworkZ.Characters:PostLoad(isoPlayer, characterID)
-        local username = isoPlayer:getUsername()
-        local character = FrameworkZ.Characters:New(username, characterID)
-
-        if not character then return false end
-
-        FrameworkZ.Characters:CreateCharacterTick(isoPlayer, 1)
-        character.isoPlayer = isoPlayer
-        character:Initialize()
-        timer:Create("FZ_CharacterSaveInterval", FrameworkZ.Config.CharacterSaveInterval, 0, function()
-            if FrameworkZ.Players:SaveCharacter(username, FrameworkZ.Players:GetCharacterDataByID(username, character.id)) then
-                if FrameworkZ.Config.ShouldNotifyOnCharacterSave then
-                    FrameworkZ.Notifications:AddToQueue("Successfully saved current character.", FrameworkZ.Notifications.Types.Success)
-                end
-            else
-                FrameworkZ.Notifications:AddToQueue("Failed to save current character.", FrameworkZ.Notifications.Types.Danger)
-            end
-        end)
-
-        return true
-    end
-
-    --! \brief Destroys a character and removes them from the character list after disconnecting. Called by OnDisconnect event hook.
-    function FrameworkZ.Characters:OnDisconnect()
-        print("OnDisconnect")
-
-        local player = getPlayer()
-        local username = player:getUsername()
-        local character = FrameworkZ.Characters:GetCharacterByID(username)
-
-        if character then
-            character:Destroy()
-            print("Character destroyed")
-        end
-
-        self.List[username] = nil
-    end
 end
 
 if not isClient() then
@@ -614,7 +698,7 @@ if not isClient() then
     --! \param player \table Player object.
     --! \param args \string
     function FrameworkZ.Characters.OnClientCommand(module, command, player, args)
-        if module == "PFW_CHAR" then
+        if module == "FZ_CHAR" then
             if command == "initialize" then
                 local username = args[1]
                 local character = FrameworkZ.Characters:New(username)

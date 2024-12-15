@@ -95,18 +95,18 @@ function PFW_CharacterView:updateAppearance()
         survivor:setWornItem(v, nil)
     end
 
-    local headItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_HEAD)
-    local faceItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_FACE)
-    local earsItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_EARS)
-    local backpackItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_BACKPACK)
-    local glovesItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_GLOVES)
-    local undershirtItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_UNDERSHIRT)
-    local overshirtItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_OVERSHIRT)
-    local vestItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_VEST)
-    local beltItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_BELT)
-    local pantsItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_PANTS)
-    local socksItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_SOCKS)
-    local shoesItem = InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_SHOES)
+    local headItem = character.EQUIPMENT_SLOT_HEAD and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_HEAD.id) or nil
+    local faceItem = character.EQUIPMENT_SLOT_FACE and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_FACE.id) or nil
+    local earsItem = character.EQUIPMENT_SLOT_EARS and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_EARS.id) or nil
+    local backpackItem = character.EQUIPMENT_SLOT_BACKPACK and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_BACKPACK.id) or nil
+    local glovesItem = character.EQUIPMENT_SLOT_GLOVES and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_GLOVES.id) or nil
+    local undershirtItem = character.EQUIPMENT_SLOT_UNDERSHIRT and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_UNDERSHIRT.id) or nil
+    local overshirtItem = character.EQUIPMENT_SLOT_OVERSHIRT and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_OVERSHIRT.id) or nil
+    local vestItem = character.EQUIPMENT_SLOT_VEST and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_VEST.id) or nil
+    local beltItem = character.EQUIPMENT_SLOT_BELT and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_BELT.id) or nil
+    local pantsItem = character.EQUIPMENT_SLOT_PANTS and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_PANTS.id) or nil
+    local socksItem = character.EQUIPMENT_SLOT_SOCKS and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_SOCKS.id) or nil
+    local shoesItem = character.EQUIPMENT_SLOT_SHOES and InventoryItemFactory.CreateItem(character.EQUIPMENT_SLOT_SHOES.id) or nil
 
     survivor:getHumanVisual():setSkinTextureIndex(character.INFO_SKIN_COLOR)
     survivor:getHumanVisual():setHairModel(character.INFO_HAIR_STYLE)
@@ -119,18 +119,18 @@ function PFW_CharacterView:updateAppearance()
     survivor:getHumanVisual():setNaturalHairColor(immutableColor)
     survivor:getHumanVisual():setNaturalBeardColor(immutableColor)
 
-    survivor:setWornItem(EQUIPMENT_SLOT_HEAD, headItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_FACE, faceItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_EARS, earsItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_BACKPACK, backpackItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_GLOVES, glovesItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_UNDERSHIRT, undershirtItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_OVERSHIRT, overshirtItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_VEST, vestItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_BELT, beltItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_PANTS, pantsItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_SOCKS, socksItem)
-    survivor:setWornItem(EQUIPMENT_SLOT_SHOES, shoesItem)
+    if headItem then survivor:setWornItem(EQUIPMENT_SLOT_HEAD, headItem) end
+    if faceItem then survivor:setWornItem(EQUIPMENT_SLOT_FACE, faceItem) end
+    if earsItem then survivor:setWornItem(EQUIPMENT_SLOT_EARS, earsItem) end
+    if backpackItem then survivor:setWornItem(EQUIPMENT_SLOT_BACKPACK, backpackItem) end
+    if glovesItem then survivor:setWornItem(EQUIPMENT_SLOT_GLOVES, glovesItem) end
+    if undershirtItem then survivor:setWornItem(EQUIPMENT_SLOT_UNDERSHIRT, undershirtItem) end
+    if overshirtItem then survivor:setWornItem(EQUIPMENT_SLOT_OVERSHIRT, overshirtItem) end
+    if vestItem then survivor:setWornItem(EQUIPMENT_SLOT_VEST, vestItem) end
+    if beltItem then survivor:setWornItem(EQUIPMENT_SLOT_BELT, beltItem) end
+    if pantsItem then survivor:setWornItem(EQUIPMENT_SLOT_PANTS, pantsItem) end
+    if socksItem then survivor:setWornItem(EQUIPMENT_SLOT_SOCKS, socksItem) end
+    if shoesItem then survivor:setWornItem(EQUIPMENT_SLOT_SHOES, shoesItem) end
 
     self.characterPreview:setSurvivorDesc(survivor)
 end

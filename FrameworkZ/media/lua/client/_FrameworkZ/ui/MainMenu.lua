@@ -291,18 +291,18 @@ function PFW_MainMenu:onFinalizeCharacter(menu)
         INFO_SKIN_COLOR = skinColor,
         INFO_HAIR_STYLE = hair,
         INFO_BEARD_STYLE = beard,
-        EQUIPMENT_SLOT_HEAD = head,
-        EQUIPMENT_SLOT_FACE = face,
-        EQUIPMENT_SLOT_EARS = ears,
-        EQUIPMENT_SLOT_BACKPACK = backpack,
-        EQUIPMENT_SLOT_GLOVES = gloves,
-        EQUIPMENT_SLOT_UNDERSHIRT = undershirt,
-        EQUIPMENT_SLOT_OVERSHIRT = overshirt,
-        EQUIPMENT_SLOT_VEST = vest,
-        EQUIPMENT_SLOT_BELT = belt,
-        EQUIPMENT_SLOT_PANTS = pants,
-        EQUIPMENT_SLOT_SOCKS = socks,
-        EQUIPMENT_SLOT_SHOES = shoes
+        EQUIPMENT_SLOT_HEAD = {id = head},
+        EQUIPMENT_SLOT_FACE = {id = face},
+        EQUIPMENT_SLOT_EARS = {id = ears},
+        EQUIPMENT_SLOT_BACKPACK = {id = backpack},
+        EQUIPMENT_SLOT_GLOVES = {id = gloves},
+        EQUIPMENT_SLOT_UNDERSHIRT = {id = undershirt},
+        EQUIPMENT_SLOT_OVERSHIRT = {id = overshirt},
+        EQUIPMENT_SLOT_VEST = {id = vest},
+        EQUIPMENT_SLOT_BELT = {id = belt},
+        EQUIPMENT_SLOT_PANTS = {id = pants},
+        EQUIPMENT_SLOT_SOCKS = {id = socks},
+        EQUIPMENT_SLOT_SHOES = {id = shoes}
     }
 
     local success, characterID = FrameworkZ.Players:CreateCharacter(self.playerObject:getUsername(), characterData)

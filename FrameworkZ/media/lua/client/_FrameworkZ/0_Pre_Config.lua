@@ -1,7 +1,9 @@
 require "OptionScreens/ConnectToServer"
+require "OptionScreens/MainScreen"
 
 FrameworkZ = FrameworkZ or {}
 FrameworkZ.PreConfig = {}
+FrameworkZ.PreConfig = FrameworkZ.Foundation:NewModule(FrameworkZ.PreConfig, "PreConfig")
 
 function FrameworkZ.PreConfig.onChatWindowInit()
     ISChat.instance:setVisible(false)
@@ -32,3 +34,18 @@ ConnectToServer.OnConnected = function(self)
 		forceChangeState(LoadingQueueState.new())
 	end
 end
+
+FrameworkZ.PreConfig.MainScreen_onMenuItemMouseDownMainMenu = MainScreen.onMenuItemMouseDownMainMenu
+MainScreen.onMenuItemMouseDownMainMenu = function(item, x, y)
+	if item.internal == "EXIT" then
+		FrameworkZ.Players:Destroy(getPlayer():getUsername())
+	end
+
+	if item.internal == "QUIT_TO_DESKTOP" then
+		FrameworkZ.Players:Destroy(getPlayer():getUsername())
+	end
+
+	FrameworkZ.PreConfig.MainScreen_onMenuItemMouseDownMainMenu(item, x, y)
+end
+
+FrameworkZ.Foundation:RegisterModule(FrameworkZ.PreConfig)
