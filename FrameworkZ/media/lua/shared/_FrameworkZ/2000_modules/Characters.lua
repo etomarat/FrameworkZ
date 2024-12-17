@@ -79,9 +79,11 @@ function CHARACTER:Initialize()
     local firstConnection = false
     local characterModData = self.isoPlayer:getModData()["FZ_CHAR"] or nil
 
-    local inventory = FrameworkZ.Inventories:New(self.isoPlayer:getUsername())
-    self.inventoryID = inventory:Initialize()
-    self.inventory = inventory
+    if not self.inventory then
+        local inventory = FrameworkZ.Inventories:New(self.isoPlayer:getUsername())
+        self.inventoryID = inventory:Initialize()
+        self.inventory = inventory
+    end
 
     if not characterModData then
         firstConnection = true
@@ -98,7 +100,7 @@ function CHARACTER:Initialize()
             skinColor = self.skinColor or "White",
             physique = self.physique or "Average",
             weight = self.weight or "125",
-            inventory = self.inventory.items or {},
+            inventory = self.inventory or {},
             upgrades = {}
         }
 
@@ -111,7 +113,7 @@ function CHARACTER:Initialize()
         self:InitializeDefaultItems()
     end
 
-    self:ValidateCharacterData()
+    --self:ValidateCharacterData()
 
     if isClient() then
         timer:Simple(5, function()
@@ -121,6 +123,21 @@ function CHARACTER:Initialize()
 
     return FrameworkZ.Characters:Initialize(self.username, self)
 end
+
+function CHARACTER:OnPreLoad()
+    FrameworkZ.Foundation.ExecuteAllHooks("OnCharacterPreLoad", self)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("OnCharacterPreLoad")
+
+function CHARACTER:OnLoad()
+    FrameworkZ.Foundation.ExecuteAllHooks("OnCharacterLoad", self)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("OnCharacterLoad")
+
+function CHARACTER:OnPostLoad(firstLoad)
+    FrameworkZ.Foundation.ExecuteAllHooks("OnCharacterPostLoad", self, firstLoad)
+end
+FrameworkZ.Foundation:AddAllHookHandlers("OnCharacterPostLoad")
 
 --! \brief Save the character's data from the character object.
 --! \param shouldTransmit \boolean (Optional) Whether or not to transmit the character's data to the server.
@@ -134,12 +151,15 @@ function CHARACTER:Save(shouldTransmit)
     if not player or not characterData then return false end
     FrameworkZ.Players:ResetCharacterSaveInterval()
 
-    -- Save character inventory
+    -- Save "physical" character inventory
     local inventory = self.isoPlayer:getInventory():getItems()
-    characterData.INVENTORY_ITEMS = {}
+    characterData.INVENTORY_PHYSICAL = {}
     for i = 0, inventory:size() - 1 do
-        table.insert(characterData.INVENTORY_ITEMS, {id = inventory:get(i):getFullType()})
+        table.insert(characterData.INVENTORY_PHYSICAL, {id = inventory:get(i):getFullType()})
     end
+
+    -- Save logical character inventory
+    characterData.INVENTORY_LOGICAL = self.inventory.items
 
     -- Save character equipment
     characterData.EQUIPMENT_SLOT_HEAD = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD) and {id = self.isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD):getFullType()} or nil
@@ -274,7 +294,7 @@ function CHARACTER:ValidateCharacterData()
 
     if not characterModData.inventory then
         initializedNewData = true
-        characterModData.inventory = self.inventory.items or {}
+        characterModData.inventory = self.inventory or {}
     end
 
     if not characterModData.upgrades then
@@ -352,7 +372,7 @@ function CHARACTER:SetName(name)
     end
 end
 
---! \brief Get the character's inventory.
+--! \brief Get the character's inventory object.
 --! \return \table The character's inventory object.
 function CHARACTER:GetInventory()
     return FrameworkZ.Inventories:GetInventoryByID(self.inventoryID)
@@ -372,39 +392,22 @@ end
 --! \return \boolean Whether or not the item was successfully given.
 function CHARACTER:GiveItem(uniqueID)
     local inventory = self:GetInventory()
-    local item = FrameworkZ.Items:GetItemByID(uniqueID)
 
-    if inventory and item then
-        local worldItem = self.isoPlayer:getInventory():AddItem(InventoryItemFactory.CreateItem(item.itemID))
-        local instanceID = FrameworkZ.Items:AddInstance(item.itemID)
-        local itemInstance = FrameworkZ.Items:InitializeInstance(instanceID, item, self.isoPlayer, worldItem)
-        local itemData = {
-            uniqueID = itemInstance.uniqueID,
-            itemID = worldItem:getFullType(),
-            instanceID = instanceID,
-            owner = self.isoPlayer:getUsername(),
-            name = itemInstance.name or "Unknown",
-            description = itemInstance.description or "No description available.",
-            category = itemInstance.category or "Uncategorized",
-            shouldConsume = itemInstance.shouldConsume or false,
-            weight = itemInstance.weight or 1,
-            useAction = itemInstance.useAction or nil,
-            useTime = itemInstance.useTime or nil
-        }
-
-        worldItem:getModData()["PFW_ITM"] = itemData
-        worldItem:setName(itemData.name)
-        worldItem:setActualWeight(itemData.weight)
+    if inventory then
+        local success, message, itemInstance = FrameworkZ.Items:CreateItem(uniqueID, self.isoPlayer)
+        
+        if not success then return false, "Failed to create item." end
+        
         inventory:AddItem(itemInstance)
 
         if isClient() then
             --worldItem:transmitModData() -- Only transmit when item is on ground?
         end
 
-        return true
+        return true, message, itemInstance
     end
 
-    return false
+    return false, "Failed to find inventory."
 end
 
 --! \brief Take an item from a character's inventory.
@@ -416,7 +419,7 @@ function CHARACTER:TakeItem(itemID)
     if item then
         local inventory = self.isoPlayer:getInventory()
         local worldItem = inventory:getFirstTypeRecurse(item.id)
-        local instanceID = worldItem:getModData()["PFW_ITM"].instanceID
+        local instanceID = worldItem:getModData()["FZ_ITM"].instanceID
 
         FrameworkZ.Items:RemoveInstance(item.id, instanceID)
         inventory:DoRemoveItem(worldItem)
@@ -520,6 +523,16 @@ function FrameworkZ.Characters:GetCharacterByID(username)
     return character
 end
 
+function FrameworkZ.Characters:GetCharacterInventoryByID(username)
+    local character = self:GetCharacterByID(username)
+
+    if character then
+        return character:GetInventory()
+    end
+
+    return nil
+end
+
 --! \brief Saves the user's currently loaded character.
 --! \param username \string The player's username to get their loaded character from.
 --! \return \boolean Whether or not the character was successfully saved.
@@ -544,6 +557,8 @@ function FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
 
     if not character then return false end
 
+    character:OnPreLoad()
+
     FrameworkZ.Characters:CreateCharacterTick(isoPlayer, 1)
     character.isoPlayer = isoPlayer
     character.name = characterData.INFO_NAME
@@ -556,11 +571,21 @@ function FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
     character.skinColor = characterData.INFO_SKIN_COLOR
     character.physique = characterData.INFO_PHYSIQUE
     character.weight = characterData.INFO_WEIGHT
+
+    local newInventory = FrameworkZ.Inventories:New(username)
+    local success, message, rebuiltInventory = FrameworkZ.Inventories:Rebuild(isoPlayer, newInventory, characterData.INVENTORY_LOGICAL or nil)
+    character.inventory = rebuiltInventory or nil
+
+    if character.inventory then
+        character.inventoryID = character.inventory.id
+        character.inventory:Initialize()
+    end
+
     character:Initialize()
 
     timer:Create("FZ_CharacterSaveInterval", FrameworkZ.Config.CharacterSaveInterval, 0, function()
         local success, message = FrameworkZ.Players:Save(username)
-        
+
         if success then
             if FrameworkZ.Config.ShouldNotifyOnCharacterSave then
                 FrameworkZ.Notifications:AddToQueue("Successfully saved current character.", FrameworkZ.Notifications.Types.Success)
@@ -569,6 +594,8 @@ function FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
             FrameworkZ.Notifications:AddToQueue(message, FrameworkZ.Notifications.Types.Danger)
         end
     end)
+
+    character:OnLoad()
 
     return true, character
 end
@@ -725,3 +752,5 @@ if not isClient() then
     end
     Events.OnClientCommand.Add(FrameworkZ.Characters.OnClientCommand)
 end
+
+FrameworkZ.Characters.Meta = CHARACTER

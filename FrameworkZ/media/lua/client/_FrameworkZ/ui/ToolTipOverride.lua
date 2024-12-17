@@ -35,8 +35,8 @@ function FrameworkZ.Overrides.WordWrapText(text)
 end
 
 function FrameworkZ.Overrides.DoTooltip(objTooltip, item, panel)
-    local itemData = item:getModData()["PFW_ITM"]
-    
+    local itemData = item:getModData()["FZ_ITM"]
+
     objTooltip:render()
 
     local textureWidth, textureHeight = 64, 64
@@ -99,10 +99,35 @@ function FrameworkZ.Overrides.DoTooltip(objTooltip, item, panel)
 
     local layoutTooltip = objTooltip:beginLayout()
     layoutTooltip:setMinLabelWidth(128)
+    local layout = nil
+
+    if itemData then
+        local itemInstance = FrameworkZ.Items:GetInstance(itemData.instanceID)
+        local itemCustomFields = itemData.customFields
+
+        for k, v in pairs(itemCustomFields) do
+            layout = layoutTooltip:addItem()
+            layout:setLabel(k .. ":", 1, 1, 0.8, 1)
+
+            if type(v) == "boolean" then
+                if v then
+                    layout:setValue("Yes", 1, 1, 1, 1)
+                else
+                    layout:setValue("No", 1, 1, 1, 1)
+                end
+            else
+                if v.get then
+                    layout:setValue(tostring(v.get(itemInstance, true)), 1, 1, 1, 1)
+                else
+                    layout:setValue(v, 1, 1, 1, 1)
+                end
+            end
+        end
+    end
 
     local weightEquipped = item:getCleanString(item:getEquippedWeight())
     local weightUnequipped = item:getUnequippedWeight()
-    local layout = layoutTooltip:addItem()
+    layout = layoutTooltip:addItem()
     layout:setLabel("Weight (Unequipped):", 1, 1, 0.8, 1)
 
     if weightUnequipped > 0 and weightUnequipped < 0.01 then

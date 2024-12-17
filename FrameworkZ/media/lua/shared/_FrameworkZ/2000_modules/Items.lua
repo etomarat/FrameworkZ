@@ -10,7 +10,7 @@ local ITEM = {}
 ITEM.__index = ITEM
 
 function ITEM:Initialize()
-    return FrameworkZ.Items:Initialize(self.uniqueID, self)
+    return FrameworkZ.Items:Initialize(self)
 end
 
 function ITEM:GetName()
@@ -18,29 +18,88 @@ function ITEM:GetName()
 end
 
 function FrameworkZ.Items:New(uniqueID, itemID, username)
+    if not uniqueID then return false, "Missing unique ID." end
+
     local object = {
-        uniqueID = uniqueID or nil,
+        uniqueID = uniqueID,
         itemID = itemID or "Base.Plank",
-        owner = username or "",
+        owner = username or nil,
         name = "Unnamed Item",
         description = "No description available."
     }
 
     setmetatable(object, ITEM)
 
-    return object
+    return object, "Item created."
 end
 
-function FrameworkZ.Items:Initialize(uniqueID, data)
-    FrameworkZ.Items.List[uniqueID] = data
+function FrameworkZ.Items:Initialize(data)
+    self.List[data.uniqueID] = data
 
-    return uniqueID
+    return data.uniqueID
 end
 
-function FrameworkZ.Items:AddInstance()
-    self.Instances[#self.Instances + 1] = {}
+function FrameworkZ.Items:CreateWorldItem(isoPlayer, fullItemID)
+    if not isoPlayer then return false, "Missing ISO Player." end
+    if not fullItemID then return false, "Missing full item ID." end
 
-    return #self.Instances
+    local worldItem = isoPlayer:getInventory():AddItem(InventoryItemFactory.CreateItem(fullItemID))
+
+    return true, "Created world item.", worldItem
+end
+
+function FrameworkZ.Items:CreateItem(itemID, isoPlayer)
+    if not itemID then return false, "Missing item ID." end
+    if not isoPlayer then return false, "Missing ISO Player." end
+
+    local item = self:GetItemByID(itemID)
+
+    if not item then return false, "Item not found." end
+
+    local success, message, worldItem = FrameworkZ.Items:CreateWorldItem(isoPlayer, item.itemID)
+
+    if not success or not worldItem then return false, message end
+
+    local instanceID, itemInstance = self:AddInstance(item, isoPlayer, worldItem)
+
+    local instanceData = {
+        uniqueID = itemInstance.uniqueID,
+        itemID = worldItem:getFullType(),
+        instanceID = instanceID,
+        owner = isoPlayer:getUsername(),
+        name = itemInstance.name or "Unknown",
+        description = itemInstance.description or "No description available.",
+        category = itemInstance.category or "Uncategorized",
+        shouldConsume = itemInstance.shouldConsume or false,
+        weight = itemInstance.weight or 1,
+        useAction = itemInstance.useAction or nil,
+        useTime = itemInstance.useTime or nil,
+        customFields = itemInstance.customFields or {}
+    }
+
+    FrameworkZ.Items:LinkWorldItemToInstanceData(worldItem, instanceData)
+
+    return true, "Created " .. itemInstance.uniqueID .. " item.", itemInstance
+end
+
+function FrameworkZ.Items:AddInstance(item, isoPlayer, worldItem)
+    local instanceID = #self.Instances + 1
+
+    if item.OnInstanced then
+        item:OnInstanced(isoPlayer, worldItem)
+    end
+
+    --item["worldItem"] = worldItem
+    --self.Instances[instanceID] = item
+    table.insert(self.Instances, item)
+
+    return instanceID, self.Instances[instanceID]
+end
+
+function FrameworkZ.Items:LinkWorldItemToInstanceData(worldItem, instanceData)
+    worldItem:getModData()["FZ_ITM"] = instanceData
+    worldItem:setName(instanceData.name)
+    worldItem:setActualWeight(instanceData.weight)
 end
 
 function FrameworkZ.Items:GetInstance(id)
@@ -56,17 +115,6 @@ function FrameworkZ.Items:RemoveInstance(id)
 
     instance.worldItem:getContainer():DoRemoveItem(instance.worldItem)
     self.Instances[id] = nil
-end
-
-function FrameworkZ.Items:InitializeInstance(id, item, playerObject, worldItem)
-    if item.OnInstanced then
-        item:OnInstanced(playerObject, worldItem)
-    end
-
-    item["worldItem"] = worldItem
-    self.Instances[id] = item
-
-    return self.Instances[id]
 end
 
 function FrameworkZ.Items:GetItemByID(uniqueID)
@@ -111,15 +159,15 @@ function FrameworkZ.Items:OnFillInventoryObjectContextMenu(player, context, item
 
     local uniqueIDCounts = {}
     for k, v in pairs(items) do
-        if instanceof(v, "InventoryItem") and v:getModData()["PFW_ITM"] then
-            local uniqueID = v:getModData()["PFW_ITM"].uniqueID
+        if instanceof(v, "InventoryItem") and v:getModData()["FZ_ITM"] then
+            local uniqueID = v:getModData()["FZ_ITM"].uniqueID
             uniqueIDCounts[uniqueID] = (uniqueIDCounts[uniqueID] or 0) + 1
         end
     end
 
     for k, v in pairs(items) do
-        if instanceof(v, "InventoryItem") and v:getModData()["PFW_ITM"] then
-            local itemData = v:getModData()["PFW_ITM"]
+        if instanceof(v, "InventoryItem") and v:getModData()["FZ_ITM"] then
+            local itemData = v:getModData()["FZ_ITM"]
             local uniqueID = itemData.uniqueID
             local instanceID = itemData.instanceID
             local instance = self:GetInstance(instanceID)

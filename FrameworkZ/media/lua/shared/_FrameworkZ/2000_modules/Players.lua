@@ -265,6 +265,22 @@ function FrameworkZ.Players:GetPlayerByID(username)
     return false
 end
 
+function FrameworkZ.Players:GetCharacterByID(username, characterID)
+    if not username or not characterID then return false end
+
+    local player = self:GetPlayerByID(username)
+
+    if player then
+        local character = player.characters[characterID]
+
+        if character then
+            return character
+        end
+    end
+
+    return false
+end
+
 --! \brief Gets saved character data by their ID.
 --! \param username \string The username of the player.
 --! \param characterID \integer The ID of the character.
@@ -385,11 +401,13 @@ function FrameworkZ.Players:SaveCharacter(username, character)
 
     local isoPlayer = player.isoPlayer
 
-    character.INVENTORY_ITEMS = {}
+    character.INVENTORY_PHYSICAL = {}
     local inventory = isoPlayer:getInventory():getItems()
     for i = 0, inventory:size() - 1 do
-        table.insert(character.INVENTORY_ITEMS, {id = inventory:get(i):getFullType()})
+        table.insert(character.INVENTORY_PHYSICAL, {id = inventory:get(i):getFullType()})
     end
+
+    character.INVENTORY_LOGICAL = FrameworkZ.Characters:GetCharacterInventoryByID(username).items
 
     character.EQUIPMENT_SLOT_HEAD = isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_HEAD):getFullType()} or nil
     character.EQUIPMENT_SLOT_FACE = isoPlayer:getWornItem(EQUIPMENT_SLOT_FACE) and {id = isoPlayer:getWornItem(EQUIPMENT_SLOT_FACE):getFullType()} or nil
@@ -464,8 +482,6 @@ function FrameworkZ.Players:LoadCharacter(username, characterData, survivorDescr
     local isoPlayer = player.isoPlayer
 
     if characterData.META_FIRST_LOAD == true then
-        characterData.META_FIRST_LOAD = false
-
         isoPlayer:setX(FrameworkZ.Config.SpawnX)
         isoPlayer:setY(FrameworkZ.Config.SpawnY)
         isoPlayer:setZ(FrameworkZ.Config.SpawnZ)
@@ -516,10 +532,16 @@ function FrameworkZ.Players:LoadCharacter(username, characterData, survivorDescr
 
     local postLoadSuccessful, character = FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
 
-    if not postLoadSuccessful then return false end
-    if not self:SaveCharacter(username, characterData) then return false end
+    if not postLoadSuccessful or not character then return false end
 
     player.loadedCharacter = character
+    character:OnPostLoad(characterData.META_FIRST_LOAD)
+
+    if characterData.META_FIRST_LOAD then
+        characterData.META_FIRST_LOAD = false
+    end
+
+    if not self:SaveCharacter(username, characterData) then return false end
 
     return true
 end

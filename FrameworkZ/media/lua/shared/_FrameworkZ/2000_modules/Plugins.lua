@@ -16,8 +16,13 @@ FrameworkZ.Plugins.BasePlugin.__index = FrameworkZ.Plugins.BasePlugin
 -- Function to initialize a new plugin
 function FrameworkZ.Plugins:CreatePlugin(name)
     local plugin = setmetatable({}, self.BasePlugin)
-
-    self:RegisterPlugin(name, plugin)
+    plugin.Meta = {
+        Author = "N/A",
+        Name = name,
+        Description = "No description set.",
+        Version = "1.0.0",
+        Compatibility = ""
+    }
 
     return plugin
 end
@@ -26,14 +31,20 @@ end
 --! \param pluginName \string The name of the plugin.
 --! \param pluginTable \table The table containing the plugin's functions and data.
 --! \param metadata \table Optional metadata for the plugin.
-function FrameworkZ.Plugins:RegisterPlugin(pluginName, pluginTable, metadata)
-    if not self.RegisteredPlugins[pluginName] then
-        self.RegisteredPlugins[pluginName] = {plugin = pluginTable, metadata = metadata or {}}
+function FrameworkZ.Plugins:RegisterPlugin(plugin)
+    if not self.RegisteredPlugins[plugin.Meta.Name] then
+        self.RegisteredPlugins[plugin.Meta.Name] = plugin
     else
-        for k, v in pairs(pluginTable) do
-            self.RegisteredPlugins[pluginName].plugin[k] = v
+        for k, v in pairs(plugin) do
+            self.RegisteredPlugins[plugin.Meta.Name].plugin[k] = v
         end
     end
+
+    FrameworkZ.Foundation:RegisterPluginHandler(plugin)
+end
+
+function FrameworkZ.Plugins:GetPlugin(pluginName)
+    return self.RegisteredPlugins[pluginName]
 end
 
 --! \brief Load a registered plugin.

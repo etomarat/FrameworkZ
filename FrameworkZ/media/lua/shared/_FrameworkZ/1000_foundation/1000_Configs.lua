@@ -3,7 +3,7 @@ FrameworkZ = FrameworkZ or {}
 -- FrameworkZ Configuration Values
 FrameworkZ.Config = {
     SkipIntro = true,
-    Version = "3.4.2",
+    Version = "4.4.2",
     VersionType = "alpha",
 
     IntroFrameworkImage = "media/textures/fz.png",

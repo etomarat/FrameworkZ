@@ -382,7 +382,7 @@ function PFW_MainMenu:onEnterMainMenuFromLoadCharacterMenu()
 end
 
 function PFW_MainMenu:onLoadCharacter()
-    local character = self.loadCharacterMenu.selectedCharacter.character
+    local character = FrameworkZ.Players:GetCharacterByID(self.playerObject:getUsername(), self.loadCharacterMenu.currentIndex)
 
     if not character then
         FrameworkZ.Notifications:AddToQueue("No character selected.", FrameworkZ.Notifications.Types.Warning, nil, self)

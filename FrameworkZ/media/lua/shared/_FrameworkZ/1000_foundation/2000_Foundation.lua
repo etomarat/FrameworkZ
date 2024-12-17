@@ -112,6 +112,10 @@ function FrameworkZ.Foundation:NewModule(moduleObject, moduleName)
 	return FrameworkZ.Modules[moduleName]
 end
 
+function FrameworkZ.Foundation:GetModule(moduleName)
+    return FrameworkZ.Modules[moduleName]
+end
+
 function FrameworkZ.Foundation:RegisterFramework()
 	FrameworkZ.Foundation:RegisterFrameworkHandler()
 end

@@ -199,7 +199,7 @@ function PFW_CharacterView:new(x, y, width, height, isoPlayer, character, name, 
 	o.borderColor = {r=0, g=0, b=0, a=0}
 	o.moveWithMouse = false
 	o.isoPlayer = isoPlayer
-    self.character = character
+    o.character = character
     o.name = name
     o.description = description
     o.defaultDirection = defaultDirection

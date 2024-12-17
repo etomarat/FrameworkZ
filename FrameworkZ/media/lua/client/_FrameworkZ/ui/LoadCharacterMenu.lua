@@ -61,11 +61,16 @@ function PFW_LoadCharacterMenu:initialise()
 
     if not self.player.previousCharacter then
         if #self.characters == 1 then
+            self.selectedCharacter:setCharacter(self.characters[1])
             self.selectedCharacter:reinitialize(self.characters[1])
             self.selectedCharacter:setVisible(true)
         elseif #self.characters >= 2 then
+            self.selectedCharacter:setCharacter(self.characters[1])
             self.selectedCharacter:reinitialize(self.characters[1])
+
+            self.rightCharacter:setCharacter(self.characters[2])
             self.rightCharacter:reinitialize(self.characters[2])
+
             self.selectedCharacter:setVisible(true)
             self.rightCharacter:setVisible(true)
         end
@@ -78,6 +83,7 @@ function PFW_LoadCharacterMenu:initialise()
         end
 
         if #self.characters == 1 then
+            self.selectedCharacter:setCharacter(self.characters[self.currentIndex])
             self.selectedCharacter:reinitialize(self.characters[self.currentIndex])
             self.selectedCharacter:setVisible(true)
             self.leftCharacter:setVisible(false)
@@ -94,13 +100,16 @@ function PFW_LoadCharacterMenu:initialise()
                 self.rightCharacter:setVisible(true)
             end
         
+            self.selectedCharacter:setCharacter(self.characters[self.currentIndex])
             self.selectedCharacter:reinitialize(self.characters[self.currentIndex])
             self.selectedCharacter:setVisible(true)
             
             if self.leftCharacter:isVisible() then
+                self.leftCharacter:setCharacter(self.characters[self.currentIndex - 1])
                 self.leftCharacter:reinitialize(self.characters[self.currentIndex - 1])
             end
             if self.rightCharacter:isVisible() then
+                self.rightCharacter:setCharacter(self.characters[self.currentIndex + 1])
                 self.rightCharacter:reinitialize(self.characters[self.currentIndex + 1])
             end
         end
@@ -127,10 +136,12 @@ function PFW_LoadCharacterMenu:onPrevious()
 end
 
 function PFW_LoadCharacterMenu:updateCharacterPreview()
+    self.selectedCharacter:setCharacter(self.characters[self.currentIndex])
     self.selectedCharacter:reinitialize(self.characters[self.currentIndex])
     self.selectedCharacter:setVisible(true)
 
     if self.currentIndex > 1 then
+        self.leftCharacter:setCharacter(self.characters[self.currentIndex - 1])
         self.leftCharacter:reinitialize(self.characters[self.currentIndex - 1])
         self.leftCharacter:setVisible(true)
     else
@@ -138,6 +149,7 @@ function PFW_LoadCharacterMenu:updateCharacterPreview()
     end
 
     if self.currentIndex < #self.characters then
+        self.rightCharacter:setCharacter(self.characters[self.currentIndex + 1])
         self.rightCharacter:reinitialize(self.characters[self.currentIndex + 1])
         self.rightCharacter:setVisible(true)
     else
