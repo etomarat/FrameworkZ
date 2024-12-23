@@ -1,4 +1,10 @@
---! \page globalVars Global Variables
+--! \page features Features
+--! \section Characters Characters
+--! Characters are the main focus of the game. They are the players that interact with the world. Characters can be given a name, description, faction, age, height, eye color, hair color, etc. They can also be given items and equipment.\n\n
+--! When a player connects to the server, they may create a character and load said character. The character is then saved to the player's data and can be loaded again when the player reconnects. Characters will be saved automatically at predetermined intervals or upon disconnection or when switching characters.\n\n
+--! Characters are not given items in the traditional sense. Instead, they are given items by a unique ID from an item defined in the framework's (or gamemode's or even plugin's) files. This special item definition is then used to create an item instance that is added to the character's inventory. This allows for items to be created dynamically and given to characters. This allows for the same Project Zomboid item to be reused for different purposes.\n\n
+
+--! \page global_variables Global Variables
 --! \section Characters Characters
 --! FrameworkZ.Characters\n
 --! See Characters for the module on characters.\n\n
@@ -6,6 +12,11 @@
 --! A list of all instanced characters in the game.
 
 FrameworkZ = FrameworkZ or {}
+
+--! \brief Characters module for FrameworkZ. Defines and interacts with CHARACTER object.
+--! \class FrameworkZ.Characters
+FrameworkZ.Characters = {}
+FrameworkZ.Characters.__index = FrameworkZ.Characters
 
 SKIN_COLOR_PALE = 0
 SKIN_COLOR_WHITE = 1
@@ -32,7 +43,9 @@ HAIR_COLOR_WHITE_R = 1
 HAIR_COLOR_WHITE_G = 1
 HAIR_COLOR_WHITE_B = 1
 
+--! \brief EQUIPMENT_SLOT_HEAD \= "Hat" Enumeration for the character's head slot.
 EQUIPMENT_SLOT_HEAD = "Hat"
+
 EQUIPMENT_SLOT_FACE = "Mask"
 EQUIPMENT_SLOT_EARS = "Ears"
 EQUIPMENT_SLOT_BACKPACK = "Back"
@@ -45,10 +58,6 @@ EQUIPMENT_SLOT_PANTS = "Pants"
 EQUIPMENT_SLOT_SOCKS = "Socks"
 EQUIPMENT_SLOT_SHOES = "Shoes"
 
---! \brief Characters module for FrameworkZ. Defines and interacts with CHARACTER object.
---! \class Characters
-FrameworkZ.Characters = {}
-FrameworkZ.Characters.__index = FrameworkZ.Characters
 FrameworkZ.Characters.List = {}
 FrameworkZ.Characters.EquipmentSlots = {
     EQUIPMENT_SLOT_HEAD,
@@ -116,7 +125,7 @@ function CHARACTER:Initialize()
     --self:ValidateCharacterData()
 
     if isClient() then
-        timer:Simple(5, function()
+        FrameworkZ.Timers:Simple(5, function()
             sendClientCommand("FZ_CHAR", "initialize", {self.isoPlayer:getUsername()})
         end)
     end
@@ -583,7 +592,7 @@ function FrameworkZ.Characters:PostLoad(isoPlayer, characterData)
 
     character:Initialize()
 
-    timer:Create("FZ_CharacterSaveInterval", FrameworkZ.Config.CharacterSaveInterval, 0, function()
+    FrameworkZ.Timers:Create("FZ_CharacterSaveInterval", FrameworkZ.Config.CharacterSaveInterval, 0, function()
         local success, message = FrameworkZ.Players:Save(username)
 
         if success then
@@ -653,7 +662,7 @@ if isClient() then
     end
 
     function FrameworkZ.Characters:CreateCharacterTick(player, tickTime)
-        timer:Create("CharacterTick", tickTime, 0, function()
+        FrameworkZ.Timers:Create("CharacterTick", tickTime, 0, function()
             local x = getMouseX()
             local y = getMouseY()
 

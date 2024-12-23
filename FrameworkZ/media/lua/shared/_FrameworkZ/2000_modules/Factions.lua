@@ -1,4 +1,4 @@
---! \page globalVars Global Variables
+--! \page global_variables Global Variables
 --! \section Factions Factions
 --! FrameworkZ.Factions\n
 --! See Factions for the module on factions.\n\n
@@ -8,7 +8,7 @@
 FrameworkZ = FrameworkZ or {}
 
 --! \brief Factions module for FrameworkZ. Defines and interacts with FACTION object.
---! \class Factions
+--! \class FrameworkZ.Factions
 FrameworkZ.Factions = {}
 FrameworkZ.Factions.__index = FrameworkZ.Factions
 FrameworkZ.Factions.List = {}

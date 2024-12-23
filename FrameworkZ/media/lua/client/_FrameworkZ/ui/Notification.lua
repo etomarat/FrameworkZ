@@ -17,12 +17,12 @@ function PFW_Notification:initialise()
 
     self:restartFadeOut()
 
-    timer:Create("NotificationSlide" .. self.ID, 0, 0, function()
+    FrameworkZ.Timers:Create("NotificationSlide" .. self.ID, 0, 0, function()
         if self.x > self.x2 then
             self:setX(self:getX() - self:getWidth() * 0.05)
         else
             self:setX(self.x2)
-            timer:Remove("NotificationSlide" .. self.ID)
+            FrameworkZ.Timers:Remove("NotificationSlide" .. self.ID)
         end
     end)
 end
@@ -31,11 +31,11 @@ function PFW_Notification:restartFadeOut()
     self.isExpiring = false
     self.hasExpired = false
     
-    if timer:Exists("NotificationFadeDelay" .. self.ID) then
-        timer:Remove("NotificationFadeDelay" .. self.ID)
+    if FrameworkZ.Timers:Exists("NotificationFadeDelay" .. self.ID) then
+        FrameworkZ.Timers:Remove("NotificationFadeDelay" .. self.ID)
     end
 
-    timer:Create("NotificationFadeDelay" .. self.ID, self.duration, 1, function()
+    FrameworkZ.Timers:Create("NotificationFadeDelay" .. self.ID, self.duration, 1, function()
         self.hasExpired = true
     end)
 end

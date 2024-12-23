@@ -1,3 +1,13 @@
+FrameworkZ = FrameworkZ or {}
+
+--! \brief Timers module for FrameworkZ. Allows for the creation of timers for delaying code executions.
+--! \class FrameworkZ.Timers
+FrameworkZ.Timers = {}
+FrameworkZ.Timers.__index = FrameworkZ.Timers
+FrameworkZ.Timers = FrameworkZ.Foundation:NewModule(FrameworkZ.Timers, "Timers")
+FrameworkZ.Timers.AdvancedTimers = {}
+FrameworkZ.Timers.SimpleTimers = {}
+
 local os_time = os.time
 local table_insert = table.insert
 local table_remove = table.remove
@@ -5,13 +15,10 @@ local assert = assert
 local type = type
 local pairs = pairs
 
-timer = {
-	Timers = {},
-	SimpleTimers = {}
-}
-
-function timer:Simple(delay, func)
-
+--! \brief Creates a simple timer that executes a function after a delay.
+--! \param \integer delay The delay in seconds before the function is executed.
+--! \param \function func The function to execute after the delay.
+function FrameworkZ.Timers:Simple(delay, func)
 	assert(type(delay) == "number", "Delay of timer should be a number type")
 	assert(type(func) == "function", "Func of timer should be a function type (lol)")
 
@@ -19,17 +26,16 @@ function timer:Simple(delay, func)
 		EndTime = os_time() + delay,
 		Func = func
 	})
-
 end
 
-function timer:Create(name, delay, repetitions, func)
-	
+function FrameworkZ.Timers:Create(name, delay, repetitions, func)
+
 	assert(type(name) == "string", "ID of timer should be a string type")
 	assert(type(delay) == "number", "Delay of timer should be a number type")
 	assert(type(repetitions) == "number", "Repetitions of timer should be a number type")
 	assert(type(func) == "function", "Func of timer should be a function type (lol)")
-	
-	self.Timers[name] = {
+
+	self.AdvancedTimers[name] = {
 		Delay = delay,
 		StartRepetitions = repetitions,
 		Repetitions = repetitions,
@@ -45,10 +51,12 @@ local function timerUpdate()
 
 	local cur_time = os_time()
 
-	for k,v in pairs(timer.Timers) do
+	local advanced_timers = FrameworkZ.Timers.AdvancedTimers
+
+	for k, v in pairs(advanced_timers) do
 
 		if not v.Paused then
-			
+
 			if cur_time >= v.LastFuncTime + v.Delay then
 
 				v.Func()
@@ -61,7 +69,7 @@ local function timerUpdate()
 
 					if v.Repetitions <= 0 then
 
-						timer.Timers[k] = nil
+						FrameworkZ.Timers.AdvancedTimers[k] = nil
 
 					end
 
@@ -73,12 +81,12 @@ local function timerUpdate()
 
 	end
 
-	local simple_timers = timer.SimpleTimers
+	local simple_timers = FrameworkZ.Timers.SimpleTimers
 
 	for i = #simple_timers, 1, -1 do
 
 		local t = simple_timers[i]
-		
+
 		if t.EndTime <= cur_time then
 
 			t.Func()
@@ -91,28 +99,28 @@ local function timerUpdate()
 
 end
 Events.OnTickEvenPaused.Add(timerUpdate)
-	
-function timer:Remove(name)
 
-	local t = self.Timers[name]
+function FrameworkZ.Timers:Remove(name)
+
+	local t = self.AdvancedTimers[name]
 
 	if not t then return false end
 
-	self.Timers[name] = nil
+	self.AdvancedTimers[name] = nil
 
 	return true
 
 end
 
-function timer:Exists(name)
+function FrameworkZ.Timers:Exists(name)
 
-	return self.Timers[name] and true or false
+	return self.AdvancedTimers[name] and true or false
 
 end
 
-function timer:Start(name)
+function FrameworkZ.Timers:Start(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	if not t then return false end
 
@@ -125,9 +133,9 @@ function timer:Start(name)
 
 end
 
-function timer:Pause(name)
+function FrameworkZ.Timers:Pause(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	if not t then return false end
 
@@ -140,9 +148,9 @@ function timer:Pause(name)
 
 end
 
-function timer:UnPause(name)
+function FrameworkZ.Timers:UnPause(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	if not t then return false end
 
@@ -153,11 +161,11 @@ function timer:UnPause(name)
 	return true
 
 end
-timer.Resume = timer.UnPause
+FrameworkZ.Timers.Resume = FrameworkZ.Timers.UnPause
 
-function timer:Toggle(name)
+function FrameworkZ.Timers:Toggle(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	if not t then return false end
 
@@ -167,9 +175,9 @@ function timer:Toggle(name)
 
 end
 
-function timer:TimeLeft(name)
+function FrameworkZ.Timers:TimeLeft(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	if not t then return end
 
@@ -185,9 +193,9 @@ function timer:TimeLeft(name)
 
 end
 
-function timer:NextTimeLeft(name)
+function FrameworkZ.Timers:NextTimeLeft(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	if not t then return end
 
@@ -203,9 +211,9 @@ function timer:NextTimeLeft(name)
 
 end
 
-function timer:RepsLeft(name)
+function FrameworkZ.Timers:RepsLeft(name)
 
-	local t = self.Timers[name]
+	local t = self.AdvancedTimers[name]
 
 	return t and t.Repetitions
 

@@ -2,10 +2,26 @@ local Events = Events
 
 FrameworkZ = FrameworkZ or {}
 
+function FrameworkZ.OnClientCommand(module, command, isoPlayer, args)
+    FrameworkZ.Foundation.ExecuteAllHooks("OnConnected", module, command, isoPlayer, args)
+end
+Events.OnClientCommand.Add(FrameworkZ.OnClientCommand)
+
 function FrameworkZ.OnConnected()
     FrameworkZ.Foundation.ExecuteAllHooks("OnConnected")
 end
 Events.OnConnected.Add(FrameworkZ.OnConnected)
+
+function FrameworkZ.OnFillInventoryObjectContextMenu(player, context, items)
+    FrameworkZ.Foundation.ExecuteAllHooks("OnFillInventoryObjectContextMenu", player, context, items)
+end
+Events.OnFillInventoryObjectContextMenu.Add(FrameworkZ.OnFillInventoryObjectContextMenu)
+FrameworkZ.Foundation:AddAllHookHandlers("OnFillInventoryObjectContextMenu")
+
+function FrameworkZ.OnInitGlobalModData()
+    FrameworkZ.Foundation.ExecuteAllHooks("OnInitGlobalModData")
+end
+Events.OnInitGlobalModData.Add(FrameworkZ.OnInitGlobalModData)
 
 function FrameworkZ.OnMainMenuEnter()
     FrameworkZ.Foundation.ExecuteAllHooks("OnMainMenuEnter")
@@ -42,17 +58,19 @@ end
 Events.OnDisconnect.Add(FrameworkZ.OnDisconnect)
 FrameworkZ.Foundation:AddAllHookHandlers("OnDisconnect")
 
+--[[
 function FrameworkZ.Foundation.OnFillInventoryObjectContextMenu(playerID, context, items)
     FrameworkZ.Foundation.ExecuteAllHooks("LoadGridsquare")
 
-    --[[for k, v in pairs(FrameworkZ.Modules) do
+    for k, v in pairs(FrameworkZ.Modules) do
         if v.OnFillInventoryObjectContextMenu then
             v.OnFillInventoryObjectContextMenu(v, playerID, context, items)
         end
-    end--]]
+    end
 end
 Events.OnFillInventoryObjectContextMenu.Add(FrameworkZ.OnFillInventoryObjectContextMenu)
 FrameworkZ.Foundation:AddAllHookHandlers("OnFillInventoryObjectContextMenu")
+--]]
 
 function FrameworkZ.OnPreFillInventoryObjectContextMenu(playerID, context, items)
     FrameworkZ.Foundation.ExecuteAllHooks("OnPreFillInventoryObjectContextMenu")

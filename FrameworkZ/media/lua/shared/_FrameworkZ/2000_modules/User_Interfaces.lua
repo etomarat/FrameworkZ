@@ -2,6 +2,8 @@ if not isClient() then return end
 
 FrameworkZ = FrameworkZ or {}
 
+--! \brief User Interfaces module. This module is used to create user interfaces for the game.
+--! \class FrameworkZ.UserInterfaces
 FrameworkZ.UserInterfaces = {}
 FrameworkZ.UserInterfaces.__index = FrameworkZ.UserInterfaces
 FrameworkZ.UserInterfaces.List = {}

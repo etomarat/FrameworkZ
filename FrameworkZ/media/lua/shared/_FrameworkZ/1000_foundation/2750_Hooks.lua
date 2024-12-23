@@ -1,4 +1,7 @@
 FrameworkZ = FrameworkZ or {}
+
+--! \brief Hooks module for FrameworkZ. Adds functions to be called on certain events.
+--! \class FrameworkZ.Hooks
 FrameworkZ.Hooks = {}
 FrameworkZ.Hooks = FrameworkZ.Foundation:NewModule(FrameworkZ.Hooks, "Hooks")
 
@@ -6,7 +9,7 @@ if isClient() then
     function FrameworkZ.Hooks:PreInitializeClient(isoPlayer)
         local username = isoPlayer:getUsername()
 
-        timer:Simple(0.1, function()
+        FrameworkZ.Timers:Simple(0.1, function()
             if not VoiceManager:playerGetMute(username) then
                 VoiceManager:playerSetMute(username)
             end

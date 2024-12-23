@@ -1,7 +1,7 @@
 -- Refactor entities with a cache of tiles for the index and then the entity? Or pop up option for selecting entity on object spawned? Cache would still be needed.
 -- It might be better to extend an entity by tile, but still use the cache.
 
---! \page globalVars Global Variables
+--! \page global_variables Global Variables
 --! \section Entities Entities
 --! FrameworkZ.Entities\n
 --! See Entities for the module on entities.\n\n
@@ -11,7 +11,7 @@
 FrameworkZ = FrameworkZ or {}
 
 --! \brief Entities module for FrameworkZ. Defines and interacts with ENTITY object.
---! \class Entities
+--! \class FrameworkZ.Entities
 FrameworkZ.Entities = {}
 FrameworkZ.Entities.__index = FrameworkZ.Entities
 FrameworkZ.Entities.List = {}

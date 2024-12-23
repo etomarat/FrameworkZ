@@ -13,7 +13,7 @@ function PFW_Introduction:initialise()
     self.initializing = ISLabel:new((self.width - getTextManager():MeasureStringX(UIFont.Large, "Initializing...")) / 2, (self.height - getTextManager():MeasureStringY(UIFont.Large, "Initializing...")) / 2, 25, "Initializing...", 1, 1, 1, 1, UIFont.Large, true)
 	self:addChild(self.initializing)
 
-	timer:Simple(FrameworkZ.Config.InitializationDuration, function()
+	FrameworkZ.Timers:Simple(FrameworkZ.Config.InitializationDuration, function()
     	
 		if not FrameworkZ.Config.SkipIntro then
 			self:removeChild(self.initializing)
@@ -22,7 +22,7 @@ function PFW_Introduction:initialise()
 			emitter:playSoundImpl("button1", nil)
 			self.backgroundColor = {r=0.1, g=0.1, b=0.1, a=1}
 
-			timer:Simple(0.1, function()
+			FrameworkZ.Timers:Simple(0.1, function()
 				self.backgroundColor = {r=0, g=0, b=0, a=1}
 
 				self.cfw = ISImage:new(self.width / 2 - self.cfwTexture:getWidth() / 2, self.height / 2 - self.cfwTexture:getHeight() / 2, self.cfwTexture:getWidth(), self.cfwTexture:getHeight(), self.cfwTexture)
@@ -33,14 +33,14 @@ function PFW_Introduction:initialise()
 				self.cfw:initialise()
 				self:addChild(self.cfw)
 
-				timer:Simple(7, function()
+				FrameworkZ.Timers:Simple(7, function()
 					self:removeChild(self.cfw)
 					self.cfw = nil
 
 					emitter:playSoundImpl("lightswitch2", nil)
 					self.backgroundColor = {r=0.1, g=0.1, b=0.1, a=1}
 
-					timer:Simple(0.1, function()
+					FrameworkZ.Timers:Simple(0.1, function()
 						self.backgroundColor = {r=0, g=0, b=0, a=1}
 
 						self.hl2rp = ISImage:new(self.width / 2 - self.hl2rpTexture:getWidth() / 2, self.height / 2 - self.hl2rpTexture:getHeight() / 2, self.hl2rpTexture:getWidth(), self.hl2rpTexture:getHeight(), self.hl2rpTexture)
@@ -51,23 +51,23 @@ function PFW_Introduction:initialise()
 						self.hl2rp:initialise()
 						self:addChild(self.hl2rp)
 
-						timer:Simple(7, function()
+						FrameworkZ.Timers:Simple(7, function()
 							self:removeChild(self.hl2rp)
 							self.hl2rp = nil
 
 							emitter:playSoundImpl("lightswitch2", nil)
 							self.backgroundColor = {r=0.1, g=0.1, b=0.1, a=1}
 
-							timer:Remove("IntroTick")
+							FrameworkZ.Timers:Remove("IntroTick")
 
-							timer:Simple(0.1, function()
+							FrameworkZ.Timers:Simple(0.1, function()
 								self.backgroundColor = {r=0, g=0, b=0, a=1}
 
 								local characterSelect = PFW_MainMenu:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight(), self.playerObject)
 								characterSelect:initialise()
 								characterSelect:addToUIManager()
 
-								timer:Simple(1, function()
+								FrameworkZ.Timers:Simple(1, function()
 									self:setVisible(false)
 									self:removeFromUIManager()
 								end)
@@ -77,12 +77,12 @@ function PFW_Introduction:initialise()
 				end)
 			end)
 		else
-			timer:Remove("IntroTick")
+			FrameworkZ.Timers:Remove("IntroTick")
 			local characterSelect = PFW_MainMenu:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight(), self.playerObject)
 			characterSelect:initialise()
 			characterSelect:addToUIManager()
 
-			timer:Simple(1, function()
+			FrameworkZ.Timers:Simple(1, function()
 				self:setVisible(false)
 				self:removeFromUIManager()
 			end)
@@ -111,7 +111,7 @@ local function calculateWidthHeight(originalAspectRatio, width, height, changeVa
 	end
 end
 
-timer:Create("IntroTick", 0.1, 0, function()
+FrameworkZ.Timers:Create("IntroTick", 0.1, 0, function()
 	if PFW_Introduction.instance then
 		local instance = PFW_Introduction.instance
 

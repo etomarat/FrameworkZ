@@ -1,6 +1,7 @@
 local Events = Events
 
--- Define the FrameworkZ.Plugins module
+--! \brief Plugins module for FrameworkZ. Extends the framework with modular plugins.
+--! \class FrameworkZ.Plugins
 FrameworkZ.Plugins = {}
 FrameworkZ.Plugins.__index = FrameworkZ.Plugins
 FrameworkZ.Plugins.RegisteredPlugins = {}

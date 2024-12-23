@@ -1,5 +1,7 @@
 FrameworkZ = FrameworkZ or {}
 
+--! \brief Items module for FrameworkZ. Defines and interacts with ITEM \object.
+--! \class FrameworkZ.Items
 FrameworkZ.Items = {}
 FrameworkZ.Items.__index = FrameworkZ.Items
 FrameworkZ.Items.List = {}
@@ -9,9 +11,24 @@ FrameworkZ.Items = FrameworkZ.Foundation:NewModule(FrameworkZ.Items, "Items")
 local ITEM = {}
 ITEM.__index = ITEM
 
+ITEM.name = "Unnamed Item"
+ITEM.description = "No description available."
+ITEM.category = "No Category"
+ITEM.useText = "Use"
+ITEM.useTime = 1
+ITEM.weight = 1
+ITEM.shouldConsume = true
+
 function ITEM:Initialize()
     return FrameworkZ.Items:Initialize(self)
 end
+
+function ITEM:CanContext(isoPlayer, worldItem) return true end
+function ITEM:CanDrop(isoPlayer, worldItem) return true end
+function ITEM:CanUse(isoPlayer, worldItem) return true end
+function ITEM:OnContext(playerObject, instance, interactContext) end
+function ITEM:OnInstanced(isoPlayer, worldItem) end
+function ITEM:OnUse(isoPlayer, worldItem) end
 
 function ITEM:GetName()
     return self.name or "Unnamed Item"
@@ -24,8 +41,6 @@ function FrameworkZ.Items:New(uniqueID, itemID, username)
         uniqueID = uniqueID,
         itemID = itemID or "Base.Plank",
         owner = username or nil,
-        name = "Unnamed Item",
-        description = "No description available."
     }
 
     setmetatable(object, ITEM)
@@ -85,15 +100,17 @@ end
 function FrameworkZ.Items:AddInstance(item, isoPlayer, worldItem)
     local instanceID = #self.Instances + 1
 
-    if item.OnInstanced then
-        item:OnInstanced(isoPlayer, worldItem)
-    end
-
     --item["worldItem"] = worldItem
     --self.Instances[instanceID] = item
-    table.insert(self.Instances, item)
+    table.insert(self.Instances, FrameworkZ.Utilities:CopyTable(item))
 
-    return instanceID, self.Instances[instanceID]
+    local itemInstance = self.Instances[instanceID]
+
+    if itemInstance.OnInstanced then
+        itemInstance:OnInstanced(isoPlayer, worldItem)
+    end
+
+    return instanceID, itemInstance
 end
 
 function FrameworkZ.Items:LinkWorldItemToInstanceData(worldItem, instanceData)
@@ -180,7 +197,7 @@ function FrameworkZ.Items:OnFillInventoryObjectContextMenu(player, context, item
 
                 if canContext then
                     if instance.OnContext then
-                        context = instance:OnContext(playerObject, instance, interactContext)
+                        context = instance:OnContext(playerObject, menuManager, uniqueIDCounts[uniqueID])
                     elseif instance.OnUse then
                         local useText = (instance.useText or "Use") .. " " .. instance.name
                         local useOption = Options.new(useText, self, FrameworkZ.Items.OnUseItemCallback, {v, instance, playerObject}, true, true, uniqueIDCounts[uniqueID])
@@ -211,3 +228,5 @@ function FrameworkZ.Items:OnFillInventoryObjectContextMenu(player, context, item
         menuManager:addOption(option, interactSubMenu)
     end
 end
+
+FrameworkZ.Foundation:RegisterModule(FrameworkZ.Items)

@@ -2,6 +2,8 @@ if not isClient() then return end
 
 FrameworkZ = FrameworkZ or {}
 
+--! \brief Notifications module for FrameworkZ. Queues and sends notifications.
+--! \class FrameworkZ.Notifications
 FrameworkZ.Notifications = {}
 FrameworkZ.Notifications.__index = FrameworkZ.Notifications
 FrameworkZ.Notifications.Queue = {}
@@ -53,7 +55,7 @@ function FrameworkZ.Notifications:ProcessQueue(isProcessingContinued)
                 end
             end
 
-            timer:Simple(1, function()
+            FrameworkZ.Timers:Simple(1, function()
                 self.isProcessing = self:ProcessQueue(true)
             end)
 
@@ -77,19 +79,19 @@ function FrameworkZ.Notifications:ProcessQueue(isProcessingContinued)
 
             local processingNotification = self.List[processingID]
 
-            timer:Create("NotificationFadeOut", 0, 0, function()
+            FrameworkZ.Timers:Create("NotificationFadeOut", 0, 0, function()
                 if processingNotification.isExpiring and processingNotification.textLabel.a > 0 then
                     processingNotification.backgroundColor.a = processingNotification.backgroundColor.a - processingNotification.originalAlpha * 0.01
                     processingNotification.borderColor.a = processingNotification.borderColor.a - processingNotification.originalAlpha * 0.01
                     processingNotification.textLabel.a = processingNotification.textLabel.a - 1 * 0.01
-                elseif processingNotification.isExpiring and timer:Exists("NotificationFadeOut") then
-                    timer:Remove("NotificationFadeOut")
+                elseif processingNotification.isExpiring and FrameworkZ.Timers:Exists("NotificationFadeOut") then
+                    FrameworkZ.Timers:Remove("NotificationFadeOut")
                     processingNotification.hasFullyExpired = true
                     processingNotification.backgroundColor.a = 0
                     processingNotification.borderColor.a = 0
                     processingNotification.textLabel.a = 0
 
-                    timer:Simple(0.5, function()
+                    FrameworkZ.Timers:Simple(0.5, function()
                         for i = processingID, #self.List, 1 do
                             local notification = self.List[i]
 
@@ -101,17 +103,17 @@ function FrameworkZ.Notifications:ProcessQueue(isProcessingContinued)
                         processingNotification:removeFromUIManager()
                         table.remove(self.List, processingID)
 
-                        timer:Simple(1, function()
+                        FrameworkZ.Timers:Simple(1, function()
                             self.isProcessing = self:ProcessQueue(true)
                         end)
                     end)
                 elseif not processingNotification.hasFullyExpired and not processingNotification.isExpiring then
-                    timer:Remove("NotificationFadeOut")
+                    FrameworkZ.Timers:Remove("NotificationFadeOut")
                     processingNotification.backgroundColor.a = math.min(processingNotification.originalAlpha + 0.25, 1)
                     processingNotification.borderColor.a = processingNotification.originalAlpha
                     processingNotification.textLabel.a = 1
 
-                    timer:Simple(1, function()
+                    FrameworkZ.Timers:Simple(1, function()
                         self.isProcessing = self:ProcessQueue(true)
                     end)
                 end
@@ -127,7 +129,7 @@ end
 --! \param notificationType \string The type of notification to display. See notification types.
 --! \param duration \integer The duration the notification should be displayed for.
 --! \param ui \object The UI object that would cover where notifications display. Useful if you want to display notifications over top of a specific UI object.
---! \return \class The notification UI object.
+--! \return \object The notification UI object.
 function FrameworkZ.Notifications:AddToQueue(message, notificationType, duration, ui)
     if not message then return end
 
@@ -143,7 +145,7 @@ function FrameworkZ.Notifications:AddToQueue(message, notificationType, duration
 end
 
 function FrameworkZ.Notifications:OnGameStart()
-    timer:Create("NotificationTick", 1, 0, function()
+    FrameworkZ.Timers:Create("NotificationTick", 1, 0, function()
         if not self.isProcessing then
             self.isProcessing = self:ProcessQueue(false)
         end

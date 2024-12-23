@@ -4,19 +4,21 @@ MenuManager.__index = MenuManager
 function MenuManager.new(context)
     local self = setmetatable({}, MenuManager)
     self.context = context
-    self.contextMenuBuilder = ContextMenuBuilder.new(context)
+    self.contextMenuBuilder = ContextMenuBuilder.new(self, context)
     self.subMenuBuilders = {}
     return self
 end
 
 function MenuManager:addOption(option, target)
     target = target or self.contextMenuBuilder
-    target:addOption(option.text, option.target, option.callback, option.callbackParameters, option.onTop)
+    target:addOption(option.text, option.target, option.callback, option.callbackParameters, option.addOnTop)
 end
 
-function MenuManager:addSubMenu(name, onTop, options)
-    local _, subMenuBuilder = self.contextMenuBuilder:addSubMenu(name, onTop, options)
+function MenuManager:addSubMenu(name, addOnTop, options)
+    -- Create a submenu and its builder
+    local menuOption, subMenuBuilder = self.contextMenuBuilder:addSubMenu(name, addOnTop, options)
 
+    -- Store the submenu builder for later use
     table.insert(self.subMenuBuilders, subMenuBuilder)
 
     return subMenuBuilder
@@ -28,10 +30,10 @@ function MenuManager:addAggregatedOption(unqiueID, option, target)
 end
 
 function MenuManager:buildMenu()
-    -- Build the aggregated options for the main context menu
+    -- Build aggregated options for the main context menu
     self.contextMenuBuilder:buildAggregatedOptions()
 
-    -- Build the aggregated options for the sub menus
+    -- Build aggregated options for submenus
     for _, subMenuBuilder in ipairs(self.subMenuBuilders) do
         subMenuBuilder:buildAggregatedOptions()
     end
@@ -39,6 +41,16 @@ end
 
 function MenuManager:getContext()
     return self.context
+end
+
+function MenuManager:getSubMenu(subMenuName)
+    for _, subMenuBuilder in ipairs(self.subMenuBuilders) do
+        if subMenuBuilder.name and subMenuBuilder.name == subMenuName then
+            return subMenuBuilder
+        end
+    end
+
+    return nil
 end
 
 -- Options class
@@ -100,8 +112,9 @@ end
 ContextMenuBuilder = {}
 ContextMenuBuilder.__index = ContextMenuBuilder
 
-function ContextMenuBuilder.new(context)
+function ContextMenuBuilder.new(menuManager, context)
     local self = setmetatable({}, ContextMenuBuilder)
+    self.menuManager = menuManager
     self.context = context
     self.addedOptions = {}
     self.aggregatedOptions = {}
@@ -113,36 +126,53 @@ function ContextMenuBuilder:getContext()
     return self.context
 end
 
-function ContextMenuBuilder:addOption(name, target, callback, parameters, onTop)
-    local option
+function ContextMenuBuilder:getOptions()
+    return self.addedOptions
+end
 
-    if onTop then
+function ContextMenuBuilder:getAggregatedOptions()
+    return self.aggregatedOptions
+end
+
+function ContextMenuBuilder:getMenuManager()
+    return self.menuManager
+end
+
+function ContextMenuBuilder:addOption(name, target, callback, parameters, addOnTop)
+    local option
+    if addOnTop then
         option = self.context:addOptionOnTop(name, target, callback, parameters)
     else
         option = self.context:addOption(name, target, callback, parameters)
     end
 
+    -- Track added options for debugging
+    table.insert(self.addedOptions, option)
     return option
 end
 
-function ContextMenuBuilder:addSubMenu(name, onTop, options)
+function ContextMenuBuilder:addSubMenu(name, addOnTop, options)
+    -- Create a new context for the submenu
     local subMenu = ISContextMenu:getNew(self.context)
-    local subMenuBuilder = ContextMenuBuilder.new(subMenu)
+    local subMenuBuilder = ContextMenuBuilder.new(self.menuManager, subMenu) -- Pass menuManager properly
+    subMenuBuilder.name = name
 
+    -- Add predefined options to the submenu
     if options then
         for _, option in ipairs(options) do
-            subMenuBuilder:addOption(option.name, option.target, option.callback, option.parameters, option.onTop)
+            subMenuBuilder:addOption(option.text, option.target, option.callback, option.callbackParameters, option.addOnTop)
         end
     end
 
+    -- Create a new menu option that leads to the submenu
     local menuOption
-
-    if onTop then
+    if addOnTop then
         menuOption = self.context:addOptionOnTop(name)
     else
         menuOption = self.context:addOption(name)
     end
 
+    -- Add the submenu to the parent context
     self.context:addSubMenu(menuOption, subMenu)
     table.insert(self.subMenus, subMenuBuilder)
 

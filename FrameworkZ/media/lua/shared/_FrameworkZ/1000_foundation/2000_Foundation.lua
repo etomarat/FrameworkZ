@@ -1,49 +1,46 @@
 --! \mainpage Main Page
 --! Created By RJ_RayJay
 --! \section Introduction
---! Project HL2RP is a roleplay framework for the game Project Zomboid. This framework is designed to be a base for roleplay servers, providing a variety of features and systems to help server owners create a unique and enjoyable roleplay experience for their players. We have plans to make a standalone framework for Project Zomboid, but for now, we are focusing on the Project HL2RP framework integrated with the HL2RP gamemode.
+--! FrameworkZ is a roleplay framework for the game Project Zomboid. This framework is designed to be a base for roleplay servers, providing a variety of features and systems to help server owners create a unique and enjoyable roleplay experience for their players.
 --! \section Features
---! The Project HL2RP framework includes a variety of features and systems to help server owners create a unique and enjoyable roleplay experience for their players. Some of the features and systems include:
+--! FrameworkZ includes a variety of features and systems to help server owners create a unique and enjoyable roleplay experience for their players. Some of the features and systems include:
 --! - Characters
 --! - Factions
 --! - Entities
 --! - Items
 --! - Inventories
---! - Trading
---! - Crafting
---! - Skills
---! - Vehicles
---! - Housing
---! - Jobs
---! - Quests
---! - Events
---! - Admin
+--! - Modules
+--! - Plugins
+--! - Hooks
+--! - Notifications
 --! - ...and more!
 --! \section Installation
---! To install the Project HL2RP framework, simply download the latest release from the Steam Workshop and add the Workshop ID/Mod ID into your Project Zomboid server's config file. After installing, you can start your server and the framework will be ready to use.
+--! To install the FrameworkZ framework, simply download the latest release from the Steam Workshop and add the Workshop ID/Mod ID into your Project Zomboid server's config file. After installing, you can start your server and the framework will be ready to use. Typically you would also install a gamemode alongside the framework for additional functionality. Refer to your gamemode of choice for additional installation instructions.
 --! \section Usage
---! The Project HL2RP framework is designed to be easy to use and extend. The framework is built using Lua, a lightweight, multi-paradigm programming language designed primarily for embedded use in applications. The framework is designed to be modular, allowing server owners to easily add, remove, and modify features and systems to suit their needs. The framework also includes extensive documentation to help server owners understand how to use and extend the framework.
+--! The FrameworkZ framework is designed to be easy to use and extend. The framework is built using Lua, a lightweight, multi-paradigm programming language designed primarily for embedded use in applications. The framework is designed to be modular, allowing server owners to easily add, remove, and modify features and systems to suit their needs. The framework also includes extensive documentation to help server owners understand how to use and extend the framework.
 --! \section Contributing
---! The Project HL2RP framework is an open-source project and we welcome contributions from the community. If you would like to contribute to the framework, you can do so by forking the GitHub repository, making your changes, and submitting a pull request. We also welcome bug reports, feature requests, and feedback from the community. If you have any questions or need help with the framework, you can join the Project HL2RP Discord server and ask for assistance in the #support channel.
+--! The FrameworkZ framework is an open-source project and we welcome contributions from the community. If you would like to contribute to the framework, you can do so by forking the GitHub repository, making your changes, and submitting a pull request. We also welcome bug reports, feature requests, and feedback from the community. If you have any questions or need help with the framework, you can join the FrameworkZ Discord server and ask for assistance in the #support channel.
 --! \section License
---! The Project HL2RP framework is licensed under the MIT License, a permissive open-source license that allows you to use, modify, and distribute the framework for free. You can find the full text of the MIT License in the LICENSE file included with the framework. We chose the MIT License because we believe in the power of open-source software and want to encourage collaboration and innovation in the Project Zomboid community.
+--! The FrameworkZ framework is licensed under the MIT License, a permissive open-source license that allows you to use, modify, and distribute the framework for free. You can find the full text of the MIT License in the LICENSE file included with the framework. We chose the MIT License because we believe in the power of open-source software and want to encourage collaboration and innovation in the Project Zomboid community.
 --! \section Support
---! If you need help with the Project HL2RP framework, you can join the Project HL2RP Discord server and ask for assistance in the #support channel. We have a friendly and knowledgeable community that is always willing to help with any questions or issues you may have. We also have a variety of resources available to help you get started with the framework, including documentation, tutorials, and example code.
+--! If you need help with the FrameworkZ framework, you can join the FrameworkZ Discord server and ask for assistance in the #support channel. We have a friendly and knowledgeable community that is always willing to help with any questions or issues you may have. We also have a variety of resources available to help you get started with the framework, including documentation, tutorials, and example code.
 --! \section Conclusion
---! The Project HL2RP framework is a powerful and flexible tool for creating roleplay servers in Project Zomboid. Whether you are a server owner looking to create a unique roleplay experience for your players or a developer looking to contribute to an open-source project, the Project HL2RP framework has something for everyone. We hope you enjoy using the framework and look forward to seeing the amazing roleplay experiences you create with it.
+--! The FrameworkZ framework is a powerful and flexible tool for creating roleplay servers in Project Zomboid. Whether you are a server owner looking to create a unique roleplay experience for your players or a developer looking to contribute to an open-source project, the FrameworkZ framework has something for everyone. We hope you enjoy using the framework and look forward to seeing the amazing roleplay experiences you create with it.
 --! \section Links
---! - GitHub Repository: Coming Soon(tm)
---! - Discord Server: https://discord.gg/dEZwKHPeWZ
---! - Documentation: https://projectframework-docs.pixelport.community
---! - Tutorials: Coming Soon(tm)
---! - Example Code: Coming Soon(tm)
+--! - Steam Workshop: Coming Soon(tm)
+--! - GitHub Repository: https://github.com/Project-Zomboid-FrameworkZ/Framework
+--! - Bug Reports: https://github.com/Project-Zomboid-FrameworkZ/Framework/issues
+--! - Discord Server: https://frameworkz.projectzomboid.life/discord/
+--! - Documentation: https://frameworkz.projectzomboid.life/documentation/
+--! - Tutorials: https://frameworkz.projectzomboid.life/tutorials/
+--! - Example Code: https://frameworkz.projectzomboid.life/examples/
 
---! \page globalVars Global Variables
+--! \page global_variables Global Variables
 --! \section FrameworkZ FrameworkZ
 --! FrameworkZ
 --! The global table that contains all of the framework.
---! [table]: /var_types.html#table "table"
---! \page varTypes Variable Types
+--! [table]: /variable_types.html#table "table"
+--! \page variable_types Variable Types
 --! \section string string
 --! A string is a sequence of characters. Strings are used to represent text and are enclosed in double quotes or single quotes.
 --! \section boolean boolean
@@ -64,6 +61,8 @@
 --! Mixed is a placeholder that represents a combination of different types of values. It is used to indicate that a variable can hold a variety of different types of values.
 --! \section class class
 --! Class is a placeholder that represents a class of objects by a table set to a metatable.
+--! \section object object
+--! Object is a placeholder that represents an instance of a class.
 
 local Events = Events
 local isClient = isClient
@@ -73,14 +72,13 @@ local isClient = isClient
 FrameworkZ = FrameworkZ or {}
 
 --! \brief Foundation for FrameworkZ.
---! \class Foundation
---! \memberof FrameworkZ
+--! \class FrameworkZ.Foundation
 FrameworkZ.Foundation = {}
 
 --FrameworkZ.Foundation.__index = FrameworkZ.Foundation
 
---! \brief Modules for FrameworkZ.
---! \memberof FrameworkZ
+--! \brief Modules for FrameworkZ. Extends the framework with additional functionality.
+--! \class FrameworkZ.Modules
 FrameworkZ.Modules = {}
 
 --! \brief Create a new instance of the FrameworkZ Framework.
@@ -114,6 +112,17 @@ end
 
 function FrameworkZ.Foundation:GetModule(moduleName)
     return FrameworkZ.Modules[moduleName]
+end
+
+--! \brief Get the meta object stored on a module. Not every module will have a meta object. This is a very specific use case and is used for getting instantiable objects such as PLAYER objects or CHARACTER objects.
+--! \param moduleName \string The name of the module.
+--! \return \table The meta object stored on the module or \nil if nothing was found.
+function FrameworkZ.Foundation:GetModuleMetaObject(moduleName)
+    if FrameworkZ.Modules[moduleName] and FrameworkZ.Modules[moduleName].Meta then
+        return FrameworkZ.Modules[moduleName].Meta
+    end
+
+    return nil
 end
 
 function FrameworkZ.Foundation:RegisterFramework()
@@ -522,7 +531,7 @@ end
 FrameworkZ.Foundation:AddAllHookHandlers("PreInitializeClient")
 
 function FrameworkZ.Foundation:InitializeClient(isoPlayer)
-    timer:Simple(FrameworkZ.Config.InitializationDuration, function()
+    FrameworkZ.Timers:Simple(FrameworkZ.Config.InitializationDuration, function()
         FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient", isoPlayer)
         FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient", isoPlayer)
         FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient", isoPlayer)

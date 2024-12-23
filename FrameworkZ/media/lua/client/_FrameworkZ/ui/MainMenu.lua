@@ -9,10 +9,10 @@ function PFW_MainMenu:initialise()
     
     -- HL2RP LIGHTNING STUFF
     --[[
-    timer:Create("MainMenuTick", 1, 0, function()
+    FrameworkZ.Timers:Create("MainMenuTick", 1, 0, function()
         if PFW_MainMenu.instance then
-            if not timer:Exists("NextLightning") then
-                timer:Create("NextLightning", nextLightning, 1, function()
+            if not FrameworkZ.Timers:Exists("NextLightning") then
+                FrameworkZ.Timers:Create("NextLightning", nextLightning, 1, function()
                     local mainMenu = PFW_MainMenu.instance
                     mainMenu.shouldFlashLightning = true
                     mainMenu.hasFlashed1 = false
@@ -20,7 +20,7 @@ function PFW_MainMenu:initialise()
                     mainMenu.hasFlashed3 = false
                     nextLightning = ZombRandBetween(10, 60)
 
-                    timer:Simple(2, function()
+                    FrameworkZ.Timers:Simple(2, function()
                         mainMenu.emitter:playSoundImpl("thunder" .. ZombRandBetween(3, 4), nil)
                     end)
                 end)
@@ -93,14 +93,14 @@ function PFW_MainMenu:fadeOutMainMenuMusic()
         self.emitter:setVolume(currentMainMenuSong, mainMenuMusicVolume)
 
         if mainMenuMusicVolume <= 0 then
-            timer:Remove("FadeOutMainMenuMusic")
+            FrameworkZ.Timers:Remove("FadeOutMainMenuMusic")
             self.emitter:stopSound(currentMainMenuSong)
         end
     end
 end
 
 function PFW_MainMenu:onClose()
-    timer:Create("FadeOutMainMenuMusic", 0.01, 0, function()
+    FrameworkZ.Timers:Create("FadeOutMainMenuMusic", 0.01, 0, function()
         self:fadeOutMainMenuMusic()
     end)
 
@@ -425,13 +425,13 @@ function PFW_MainMenu:prerender()
             self:drawTextureScaled(getTexture("media/textures/lightning_1.png"), 0, 0, self.width, self.height, opacity, 1, 1, 1)
         end
         
-        timer:Simple(0.05, function()
+        FrameworkZ.Timers:Simple(0.05, function()
             self.hasFlashed1 = true
 
-            timer:Simple(0.05, function()
+            FrameworkZ.Timers:Simple(0.05, function()
                 self.hasFlashed2 = true
                 
-                timer:Simple(0.05, function()
+                FrameworkZ.Timers:Simple(0.05, function()
                     self.hasFlashed3 = true
                     self.shouldFlashLightning = false
                 end)

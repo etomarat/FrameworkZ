@@ -1,4 +1,4 @@
---! \page globalVars Global Variables
+--! \page global_variables Global Variables
 --! \section Players Players
 --! FrameworkZ.Players\n
 --! See Players for the module on players.\n\n
@@ -10,10 +10,14 @@ local isClient = isClient
 
 FrameworkZ = FrameworkZ or {}
 
---! \brief Characters module for FrameworkZ. Defines and interacts with PLAYER object.
---! \class Characters
+--! \brief Players module for FrameworkZ. Defines and interacts with PLAYER object.
+--! \class FrameworkZ.Players
 FrameworkZ.Players = {}
+
+--! \brief List of all instanced players in the game.
 FrameworkZ.Players.List = {}
+
+--! \brief Roles for players in FrameworkZ.
 FrameworkZ.Players.Roles = {
     User = "User",
     Operator = "Operator",
@@ -24,11 +28,13 @@ FrameworkZ.Players.Roles = {
 }
 FrameworkZ.Players = FrameworkZ.Foundation:NewModule(FrameworkZ.Players, "Players")
 
---! \brief Character class for FrameworkZ.
 --! \class PLAYER
+--! \brief Player class for FrameworkZ.
 local PLAYER = {}
 PLAYER.__index = PLAYER
 
+--! \brief Initializes the player object.
+--! \return \string The username of the player.
 function PLAYER:Initialize()
     if not self.isoPlayer then return end
 
@@ -58,7 +64,7 @@ function PLAYER:Initialize()
     self:ValidatePlayerData()
 
     --[[if isClient() then
-        timer:Simple(5, function()
+        FrameworkZ.Timers:Simple(5, function()
             sendClientCommand("FZ_PLY", "initialize", {self.isoPlayer:getUsername()})
         end)
     end--]]
@@ -92,6 +98,8 @@ function PLAYER:Save(shouldTransmit)
     return true
 end
 
+--! \brief Destroys the player object.
+--! \return \mixed of \boolean Whether or not the player was successfully destroyed and \string The message on success or failure.
 function PLAYER:Destroy()
     if not self.isoPlayer then return false, "Critical save fail: Iso Player is nil." end
 
@@ -302,8 +310,8 @@ function FrameworkZ.Players:GetCharacterDataByID(username, characterID)
 end
 
 function FrameworkZ.Players:ResetCharacterSaveInterval()
-    if timer:Exists("FZ_CharacterSaveInterval") then
-        timer:Start("FZ_CharacterSaveInterval")
+    if FrameworkZ.Timers:Exists("FZ_CharacterSaveInterval") then
+        FrameworkZ.Timers:Start("FZ_CharacterSaveInterval")
     end
 end
 
