@@ -11,9 +11,9 @@ FrameworkZ.Items = FrameworkZ.Foundation:NewModule(FrameworkZ.Items, "Items")
 local ITEM = {}
 ITEM.__index = ITEM
 
-ITEM.name = "Unnamed Item"
+ITEM.name = "Unknown"
 ITEM.description = "No description available."
-ITEM.category = "No Category"
+ITEM.category = "Uncategorized"
 ITEM.useText = "Use"
 ITEM.useTime = 1
 ITEM.weight = 1
@@ -28,10 +28,15 @@ function ITEM:CanDrop(isoPlayer, worldItem) return true end
 function ITEM:CanUse(isoPlayer, worldItem) return true end
 function ITEM:OnContext(playerObject, instance, interactContext) end
 function ITEM:OnInstanced(isoPlayer, worldItem) end
+function ITEM:OnRemoved() end
 function ITEM:OnUse(isoPlayer, worldItem) end
 
 function ITEM:GetName()
     return self.name or "Unnamed Item"
+end
+
+function ITEM:Remove()
+    return FrameworkZ.Items:RemoveInstance(self.instanceID)
 end
 
 function FrameworkZ.Items:New(uniqueID, itemID, username)
@@ -124,7 +129,11 @@ function FrameworkZ.Items:GetInstance(id)
 end
 
 function FrameworkZ.Items:RemoveInstance(id)
+    if not id or id == "" then return false, "Missing instance ID." end
+
     local instance = self.Instances[id]
+
+    if not instance then return false, "Instance not found." end
 
     if instance.OnRemoved then
         instance:OnRemoved()
@@ -132,6 +141,8 @@ function FrameworkZ.Items:RemoveInstance(id)
 
     instance.worldItem:getContainer():DoRemoveItem(instance.worldItem)
     self.Instances[id] = nil
+
+    return true, "Removed instance."
 end
 
 function FrameworkZ.Items:GetItemByID(uniqueID)
@@ -198,7 +209,9 @@ function FrameworkZ.Items:OnFillInventoryObjectContextMenu(player, context, item
                 if canContext then
                     if instance.OnContext then
                         context = instance:OnContext(playerObject, menuManager, uniqueIDCounts[uniqueID])
-                    elseif instance.OnUse then
+                    end
+
+                    if instance.OnUse then
                         local useText = (instance.useText or "Use") .. " " .. instance.name
                         local useOption = Options.new(useText, self, FrameworkZ.Items.OnUseItemCallback, {v, instance, playerObject}, true, true, uniqueIDCounts[uniqueID])
                         menuManager:addAggregatedOption(uniqueID, useOption, interactSubMenu)

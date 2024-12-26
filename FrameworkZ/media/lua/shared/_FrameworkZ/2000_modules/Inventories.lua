@@ -166,70 +166,74 @@ function FrameworkZ.Inventories:Rebuild(isoPlayer, inventory, items)
     if not inventory then return false, "No inventory to rebuild." end
     if not items then return false, "No items to add to inventory." end
 
-    -- Helper function to rebuild the inventory object itself
-    local function rebuildInventoryObject(inventory)
-        local inventoryDefinition = INVENTORY
-        if inventoryDefinition then
-            for key, value in pairs(inventoryDefinition) do
-                if inventory[key] == nil then
-                    inventory[key] = value
-                end
+    -- Recursive function to rebuild fields and inherit methods
+    local function rebuildAndInherit(item, definition)
+        -- Ensure item inherits methods and properties from the definition
+        setmetatable(item, { __index = definition })
+
+        -- Recursively rebuild all fields
+        for key, value in pairs(definition) do
+            if type(value) == "table" then
+                -- Ensure item[key] exists and is a table, then recurse
+                item[key] = item[key] or {}
+                rebuildAndInherit(item[key], value)
+            elseif type(value) == "function" then
+                -- Ensure functions are inherited and retain their object context
+                item[key] = value
+            elseif item[key] == nil then
+                -- Copy over non-function and non-table fields if missing
+                item[key] = value
             end
         end
     end
 
-    -- Helper function to recursively rebuild an item
+    -- Rebuild an individual item
     local function rebuildItem(item)
-        if type(item) == "table" then
-            local itemDefinition = FrameworkZ.Items:GetItemByID(item.uniqueID)
+        if type(item) ~= "table" then return end -- Ensure item is a table
 
-            if itemDefinition then
-                local function recursiveRebuild(target, source)
-                    for key, value in pairs(source) do
-                        if type(value) == "table" then
-                            target[key] = target[key] or {}
-                            recursiveRebuild(target[key], value)
-                        elseif target[key] == nil then
-                            target[key] = value
-                        end
-                    end
-                end
+        -- Fetch the item definition
+        local itemDefinition = FrameworkZ.Items:GetItemByID(item.uniqueID)
+        if not itemDefinition then return end -- Exit if no definition is found
 
-                recursiveRebuild(item, itemDefinition)
-            end
+        -- Rebuild fields and inherit methods
+        rebuildAndInherit(item, itemDefinition)
 
-            local success, message, worldItem = FrameworkZ.Items:CreateWorldItem(isoPlayer, item.itemID)
+        -- Create and link the world item
+        local success, message, worldItem = FrameworkZ.Items:CreateWorldItem(isoPlayer, item.itemID)
+        if success and worldItem then
+            local instanceID, itemInstance = FrameworkZ.Items:AddInstance(item, isoPlayer, worldItem)
 
-            if success and worldItem then
-                local instanceID, itemInstance = FrameworkZ.Items:AddInstance(item, isoPlayer, worldItem)
+            -- Define instance data
+            local instanceData = {
+                uniqueID = itemInstance.uniqueID,
+                itemID = worldItem:getFullType(),
+                instanceID = instanceID,
+                owner = isoPlayer:getUsername(),
+                name = itemInstance.name or "Unknown",
+                description = itemInstance.description or "No description available.",
+                category = itemInstance.category or "Uncategorized",
+                shouldConsume = itemInstance.shouldConsume or false,
+                weight = itemInstance.weight or 1,
+                useAction = itemInstance.useAction or nil,
+                useTime = itemInstance.useTime or nil,
+                customFields = itemInstance.customFields or {}
+            }
 
-                local instanceData = {
-                    uniqueID = itemInstance.uniqueID,
-                    itemID = worldItem:getFullType(),
-                    instanceID = instanceID,
-                    owner = isoPlayer:getUsername(),
-                    name = itemInstance.name or "Unknown",
-                    description = itemInstance.description or "No description available.",
-                    category = itemInstance.category or "Uncategorized",
-                    shouldConsume = itemInstance.shouldConsume or false,
-                    weight = itemInstance.weight or 1,
-                    useAction = itemInstance.useAction or nil,
-                    useTime = itemInstance.useTime or nil,
-                    customFields = itemInstance.customFields or {}
-                }
+            -- Link the world item to the instance data
+            FrameworkZ.Items:LinkWorldItemToInstanceData(worldItem, instanceData)
 
-                FrameworkZ.Items:LinkWorldItemToInstanceData(worldItem, instanceData)
+            -- Add the item instance to the inventory
+            inventory:AddItem(itemInstance)
 
-                inventory:AddItem(itemInstance)
+            -- Call OnInstance if it exists
+            if item.OnInstance then
+                item:OnInstance(isoPlayer, inventory, worldItem)
             end
         end
     end
 
-    -- Rebuild the inventory object itself
-    --rebuildInventoryObject(inventory)
-
-    -- Rebuild each item in the inventory
-    for key, item in pairs(items) do
+    -- Iterate through and rebuild each item
+    for _, item in pairs(items) do
         rebuildItem(item)
     end
 

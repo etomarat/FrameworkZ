@@ -1,6 +1,6 @@
-FrameworkZ.DollarFormat = {}
-FrameworkZ.DollarFormat.__index = FrameworkZ.DollarFormat
-FrameworkZ.DollarFormat = FrameworkZ.Foundation:NewModule(FrameworkZ.DollarFormat, "DollarFormat")
+FrameworkZ.DollarFormats = {}
+FrameworkZ.DollarFormats.__index = FrameworkZ.DollarFormats
+FrameworkZ.DollarFormats = FrameworkZ.Foundation:NewModule(FrameworkZ.DollarFormats, "DollarFormats")
 
 -- from sam_lie
 -- Compatible with Lua 5.0 and 5.1.
@@ -9,7 +9,7 @@ FrameworkZ.DollarFormat = FrameworkZ.Foundation:NewModule(FrameworkZ.DollarForma
 ---============================================================
 -- add comma to separate thousands
 -- 
-function FrameworkZ.DollarFormat:CommaValue(amount)
+function FrameworkZ.DollarFormats:CommaValue(amount)
   local formatted = amount
   while true do  
     formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
@@ -23,7 +23,7 @@ end
 ---============================================================
 -- rounds a number to the nearest decimal places
 --
-function FrameworkZ.DollarFormat:Round(val, decimal)
+function FrameworkZ.DollarFormats:Round(val, decimal)
   if (decimal) then
     return math.floor( (val * 10^decimal) + 0.5) / (10^decimal)
   else
@@ -36,7 +36,7 @@ end
 -- and rounded to given decimal places
 --
 --
-function FrameworkZ.DollarFormat:Get(amount, decimal, prefix, neg_prefix)
+function FrameworkZ.DollarFormats:Get(amount, decimal, prefix, neg_prefix)
   local str_amount,  formatted, famount, remain
 
   decimal = decimal or 2  -- default 2 decimal places

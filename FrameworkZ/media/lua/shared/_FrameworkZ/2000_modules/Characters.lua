@@ -763,3 +763,5 @@ if not isClient() then
 end
 
 FrameworkZ.Characters.Meta = CHARACTER
+
+FrameworkZ.Foundation:RegisterModule(FrameworkZ.Characters)

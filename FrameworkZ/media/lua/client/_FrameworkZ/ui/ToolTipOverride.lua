@@ -117,7 +117,7 @@ function FrameworkZ.Overrides.DoTooltip(objTooltip, item, panel)
                 end
             else
                 if v.get then
-                    layout:setValue(tostring(v.get(itemInstance, true)), 1, 1, 1, 1)
+                    layout:setValue(tostring(v.get(itemInstance)), 1, 1, 1, 1)
                 else
                     layout:setValue(v, 1, 1, 1, 1)
                 end

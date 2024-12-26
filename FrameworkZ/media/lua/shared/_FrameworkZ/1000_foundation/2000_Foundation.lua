@@ -30,10 +30,8 @@
 --! - Steam Workshop: Coming Soon(tm)
 --! - GitHub Repository: https://github.com/Project-Zomboid-FrameworkZ/Framework
 --! - Bug Reports: https://github.com/Project-Zomboid-FrameworkZ/Framework/issues
---! - Discord Server: https://frameworkz.projectzomboid.life/discord/
+--! - Discord Server: https://discord.gg/PgNTyva3xk
 --! - Documentation: https://frameworkz.projectzomboid.life/documentation/
---! - Tutorials: https://frameworkz.projectzomboid.life/tutorials/
---! - Example Code: https://frameworkz.projectzomboid.life/examples/
 
 --! \page global_variables Global Variables
 --! \section FrameworkZ FrameworkZ
@@ -521,30 +519,30 @@ function FrameworkZ.Foundation:OnGameStart()
     FrameworkZ.Foundation.ExecuteFrameworkHooks("PreInitializeClient", getPlayer())
 end
 
-function FrameworkZ.Foundation:PreInitializeClient(isoPlayer)
-    FrameworkZ.Foundation.ExecuteModuleHooks("PreInitializeClient", isoPlayer)
-    FrameworkZ.Foundation.ExecuteGamemodeHooks("PreInitializeClient", isoPlayer)
-    FrameworkZ.Foundation.ExecutePluginHooks("PreInitializeClient", isoPlayer)
+function FrameworkZ.Foundation:PreInitializeClient()
+    FrameworkZ.Foundation.ExecuteModuleHooks("PreInitializeClient", getPlayer())
+    FrameworkZ.Foundation.ExecuteGamemodeHooks("PreInitializeClient", getPlayer())
+    FrameworkZ.Foundation.ExecutePluginHooks("PreInitializeClient", getPlayer())
 
-    FrameworkZ.Foundation.ExecuteFrameworkHooks("InitializeClient", isoPlayer)
+    FrameworkZ.Foundation.ExecuteFrameworkHooks("InitializeClient", getPlayer())
 end
 FrameworkZ.Foundation:AddAllHookHandlers("PreInitializeClient")
 
-function FrameworkZ.Foundation:InitializeClient(isoPlayer)
+function FrameworkZ.Foundation:InitializeClient()
     FrameworkZ.Timers:Simple(FrameworkZ.Config.InitializationDuration, function()
-        FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient", isoPlayer)
-        FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient", isoPlayer)
-        FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient", isoPlayer)
+        FrameworkZ.Foundation.ExecuteModuleHooks("InitializeClient", getPlayer())
+        FrameworkZ.Foundation.ExecuteGamemodeHooks("InitializeClient", getPlayer())
+        FrameworkZ.Foundation.ExecutePluginHooks("InitializeClient", getPlayer())
 
-        FrameworkZ.Foundation.ExecuteFrameworkHooks("PostInitializeClient", isoPlayer)
+        FrameworkZ.Foundation.ExecuteFrameworkHooks("PostInitializeClient", getPlayer())
     end)
 end
 FrameworkZ.Foundation:AddAllHookHandlers("InitializeClient")
 
-function FrameworkZ.Foundation:PostInitializeClient(isoPlayer)
-    FrameworkZ.Foundation.ExecuteModuleHooks("PostInitializeClient", isoPlayer)
-    FrameworkZ.Foundation.ExecuteGamemodeHooks("PostInitializeClient", isoPlayer)
-    FrameworkZ.Foundation.ExecutePluginHooks("PostInitializeClient", isoPlayer)
+function FrameworkZ.Foundation:PostInitializeClient()
+    FrameworkZ.Foundation.ExecuteModuleHooks("PostInitializeClient", getPlayer())
+    FrameworkZ.Foundation.ExecuteGamemodeHooks("PostInitializeClient", getPlayer())
+    FrameworkZ.Foundation.ExecutePluginHooks("PostInitializeClient", getPlayer())
 end
 FrameworkZ.Foundation:AddAllHookHandlers("PostInitializeClient")
 
@@ -552,10 +550,10 @@ function FrameworkZ.Foundation:OnMainMenuEnter()
     FrameworkZ.Foundation.ExecuteFrameworkHooks("OnOpenEscapeMenu", getPlayer())
 end
 
-function FrameworkZ.Foundation:OnOpenEscapeMenu(isoPlayer)
-    FrameworkZ.Foundation.ExecuteModuleHooks("OnOpenEscapeMenu", isoPlayer)
-    FrameworkZ.Foundation.ExecuteGamemodeHooks("OnOpenEscapeMenu", isoPlayer)
-    FrameworkZ.Foundation.ExecutePluginHooks("OnOpenEscapeMenu", isoPlayer)
+function FrameworkZ.Foundation:OnOpenEscapeMenu()
+    FrameworkZ.Foundation.ExecuteModuleHooks("OnOpenEscapeMenu", getPlayer())
+    FrameworkZ.Foundation.ExecuteGamemodeHooks("OnOpenEscapeMenu", getPlayer())
+    FrameworkZ.Foundation.ExecutePluginHooks("OnOpenEscapeMenu", getPlayer())
 end
 FrameworkZ.Foundation:AddAllHookHandlers("OnOpenEscapeMenu")
 
