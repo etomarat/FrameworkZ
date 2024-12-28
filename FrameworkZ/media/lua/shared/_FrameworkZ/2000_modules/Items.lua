@@ -6,6 +6,9 @@ FrameworkZ.Items = {}
 FrameworkZ.Items.__index = FrameworkZ.Items
 FrameworkZ.Items.List = {}
 FrameworkZ.Items.Instances = {}
+
+--! \brief An instance map. Contains references to item instances indexed by an item's unique ID and instance ID as a string for optimized lookups. Instance Map is structured as follows: [uniqueID][username][#index] = instance
+FrameworkZ.Items.InstanceMap = {}
 FrameworkZ.Items = FrameworkZ.Foundation:NewModule(FrameworkZ.Items, "Items")
 
 local ITEM = {}
@@ -105,11 +108,22 @@ end
 function FrameworkZ.Items:AddInstance(item, isoPlayer, worldItem)
     local instanceID = #self.Instances + 1
 
-    --item["worldItem"] = worldItem
-    --self.Instances[instanceID] = item
+    item["instanceID"] = instanceID
+    item["owner"] = isoPlayer:getUsername()
+    item["worldItem"] = worldItem
     table.insert(self.Instances, FrameworkZ.Utilities:CopyTable(item))
 
     local itemInstance = self.Instances[instanceID]
+
+    if not self.InstanceMap[item.uniqueID] then
+        self.InstanceMap[item.uniqueID] = {}
+    end
+
+    if not self.InstanceMap[item.uniqueID][isoPlayer:getUsername()] then
+        self.InstanceMap[item.uniqueID][isoPlayer:getUsername()] = {}
+    end
+
+    table.insert(self.InstanceMap[item.uniqueID][isoPlayer:getUsername()], itemInstance)
 
     if itemInstance.OnInstanced then
         itemInstance:OnInstanced(isoPlayer, worldItem)
@@ -124,31 +138,80 @@ function FrameworkZ.Items:LinkWorldItemToInstanceData(worldItem, instanceData)
     worldItem:setActualWeight(instanceData.weight)
 end
 
-function FrameworkZ.Items:GetInstance(id)
-    return self.Instances[id]
+function FrameworkZ.Items:GetItemByID(uniqueID)
+    local item = self.List[uniqueID] or nil
+
+    return item
 end
 
-function FrameworkZ.Items:RemoveInstance(id)
-    if not id or id == "" then return false, "Missing instance ID." end
+function FrameworkZ.Items:GetInstance(instanceID)
+    if not instanceID or instanceID == "" then return false, "Missing instance ID." end
 
-    local instance = self.Instances[id]
+    local instance = self.Instances[instanceID]
 
     if not instance then return false, "Instance not found." end
+
+    return self.Instances[instanceID]
+end
+
+function FrameworkZ.Items:FindFirstInstanceByID(owner, uniqueID)
+    if not owner or owner == "" then return false, "Missing owner." end
+    if not uniqueID or uniqueID == "" then return false, "Missing unique ID." end
+
+    local instance = self.InstanceMap[uniqueID][owner][1]
+
+    if not instance then return false, "Instance not found." end
+
+    return instance
+end
+
+function FrameworkZ.Items:RemoveItemInstanceByID(owner, uniqueID)
+    if not owner or owner == "" then return false, "Missing owner." end
+    if not uniqueID or uniqueID == "" then return false, "Missing unique ID." end
+
+    local instance = FrameworkZ.Items:FindFirstInstanceByID(owner, uniqueID)
+
+    if not instance then return false, "Instance not found." end
+
+    return FrameworkZ.Items:RemoveInstance(instance.instanceID)
+end
+
+function FrameworkZ.Items:RemoveInstance(instanceID)
+    if not instanceID or instanceID == "" then return false, "Missing instance ID." end
+    local instance = self.Instances[instanceID]
+    if not instance then return false, "Instance not found." end
+    local player = FrameworkZ.Players:GetPlayerByID(instance.owner)
+    if not player then return false, "Player not found." end
+    local inventory = player:GetCharacter():GetInventory()
+    if not inventory then return false, "Inventory not found." end
 
     if instance.OnRemoved then
         instance:OnRemoved()
     end
 
-    instance.worldItem:getContainer():DoRemoveItem(instance.worldItem)
-    self.Instances[id] = nil
+    if instance.owner then
+        player.isoPlayer:getInventory():DoRemoveItem(instance.worldItem)
+    elseif instance.worldItem:getContainer() then
+        instance.worldItem:getContainer():removeItemOnServer(instance.worldItem)
+        instance.worldItem:getContainer():DoRemoveItem(instance.worldItem)
+    end
+
+    inventory:RemoveItem(instance)
+
+    local instanceMap = self.InstanceMap[instance.uniqueID][instance.owner]
+
+    -- It was a choice to either loop the item instance map on item removal, or loop the item instance list on item lookup. This seemed more efficient because the item
+    -- instance list is every single instance across every character, while the instance map is only the instances for a specific item on a specific character.
+    for k, v in ipairs(instanceMap) do
+        if v.instanceID == instanceID then
+            table.remove(self.InstanceMap[instance.uniqueID][instance.owner], k)
+            break
+        end
+    end
+
+    self.Instances[instanceID] = nil
 
     return true, "Removed instance."
-end
-
-function FrameworkZ.Items:GetItemByID(uniqueID)
-    local item = self.List[uniqueID] or nil
-
-    return item
 end
 
 -- TODO use multiple items, not just one

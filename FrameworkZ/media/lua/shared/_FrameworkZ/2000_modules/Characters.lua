@@ -396,6 +396,12 @@ function CHARACTER:GiveItems(uniqueID, amount)
     end
 end
 
+function CHARACTER:TakeItems(uniqueID, amount)
+    for i = 1, amount do
+        self:TakeItem(uniqueID)
+    end
+end
+
 --! \brief Give a character an item.
 --! \param uniqueID \string The ID of the item to give.
 --! \return \boolean Whether or not the item was successfully given.
@@ -422,21 +428,14 @@ end
 --! \brief Take an item from a character's inventory.
 --! \param itemID \string The ID of the item to take.
 --! \return \boolean Whether or not the item was successfully taken.
-function CHARACTER:TakeItem(itemID)
-    local item = FrameworkZ.Items:GetItemByID(itemID)
+function CHARACTER:TakeItem(uniqueID)
+    local success, message = FrameworkZ.Items:RemoveItemInstanceByID(self.isoPlayer:getUsername(), uniqueID)
 
-    if item then
-        local inventory = self.isoPlayer:getInventory()
-        local worldItem = inventory:getFirstTypeRecurse(item.id)
-        local instanceID = worldItem:getModData()["FZ_ITM"].instanceID
-
-        FrameworkZ.Items:RemoveInstance(item.id, instanceID)
-        inventory:DoRemoveItem(worldItem)
-
-        return true
+    if success then
+        return true, "Successfully took " .. uniqueID .. "."
     end
 
-    return false
+    return false, message
 end
 
 --! \brief Take an item from a character's inventory by its instance ID. Useful for taking a specific item from a stack.

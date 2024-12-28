@@ -37,7 +37,19 @@ end
 --! \param item \string The item's ID.
 --! \see CHARACTER::GiveItem(uniqueID)
 function INVENTORY:AddItem(item)
-    self.items[#self.items + 1] = item
+    local inventoryIndex = #self.items + 1
+
+    item["inventoryIndex"] = inventoryIndex
+    self.items[inventoryIndex] = item
+end
+
+function INVENTORY:RemoveItem(item)
+    if not item then return false, "No item provided." end
+    if not item.inventoryIndex then return false, "Item does not have an inventory index." end
+
+    self.items[item.inventoryIndex] = nil
+
+    return true, "Item  removed from inventory #" .. self.id
 end
 
 --! \brief Add multiple items to the inventory.
@@ -175,7 +187,10 @@ function FrameworkZ.Inventories:Rebuild(isoPlayer, inventory, items)
         for key, value in pairs(definition) do
             if type(value) == "table" then
                 -- Ensure item[key] exists and is a table, then recurse
-                item[key] = item[key] or {}
+                if item[key] == nil then
+                    item[key] = {}
+                end
+
                 rebuildAndInherit(item[key], value)
             elseif type(value) == "function" then
                 -- Ensure functions are inherited and retain their object context

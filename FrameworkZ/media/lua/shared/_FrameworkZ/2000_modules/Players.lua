@@ -193,6 +193,10 @@ function PLAYER:ValidatePlayerData()
     return initializedNewData
 end
 
+function PLAYER:GetCharacter()
+    return self.loadedCharacter
+end
+
 --! \brief Gets the stored player mod data table. Used internally. Do not use this unless you know what you are doing. Updating data on the mod data will cause inconsistencies between the mod data and the FrameworkZ player object.
 --! \return \table The stored player mod data table.
 function PLAYER:GetStoredData()
